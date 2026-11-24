@@ -1,0 +1,18 @@
+{
+  "name": "Trained Bot (Gen 2)",
+  "pawn_val": 100.0,
+  "knight_val": 315.0,
+  "bishop_val": 323.73,
+  "rook_val": 500.0,
+  "queen_val": 900.0,
+  "pst_weight": 1.0,
+  "mobility_weight": 8.84,
+  "center_control_weight": 15.0,
+  "king_attack_weight": 20.3,
+  "development_weight": 18.0,
+  "open_file_weight": 16.0,
+  "bishop_pair_weight": 40.0,
+  "passed_pawn_weight": 27.04,
+  "pawn_structure_weight": 1.0,
+  "gambit_aggression": 1.84
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Mikhail Tal (Pre-trained)",
+  "pawn_val": 90.0,
+  "knight_val": 330.0,
+  "bishop_val": 345.0,
+  "rook_val": 490.0,
+  "queen_val": 920.0,
+  "pst_weight": 1.0,
+  "mobility_weight": 14.0,
+  "center_control_weight": 18.0,
+  "king_attack_weight": 38.0,
+  "development_weight": 22.0,
+  "open_file_weight": 20.0,
+  "bishop_pair_weight": 50.0,
+  "passed_pawn_weight": 25.0,
+  "pawn_structure_weight": -12.0,
+  "gambit_aggression": 2.4
+}

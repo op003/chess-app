@@ -1,0 +1,18 @@
+{
+  "name": "Paul Morphy (Romantic)",
+  "pawn_val": 95.0,
+  "knight_val": 320.0,
+  "bishop_val": 335.0,
+  "rook_val": 510.0,
+  "queen_val": 900.0,
+  "pst_weight": 1.0,
+  "mobility_weight": 11.0,
+  "center_control_weight": 22.0,
+  "king_attack_weight": 28.0,
+  "development_weight": 32.0,
+  "open_file_weight": 25.0,
+  "bishop_pair_weight": 45.0,
+  "passed_pawn_weight": 25.0,
+  "pawn_structure_weight": -10.0,
+  "gambit_aggression": 2.0
+}

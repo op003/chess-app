@@ -211,15 +211,42 @@ def save_trained_weights(req: WeightsUpdateRequest):
 
 
 @app.post("/api/game/review")
-def review_game(req: ReviewRequest):
+async def review_game(req: ReviewRequest):
     """
     Analyzes an entire played game move-by-move.
     Generates move classifications, accuracy scores, and eval history.
+    Runs in a thread so it never blocks the FastAPI event loop.
     """
     if not req.moves:
         raise HTTPException(status_code=400, detail="No moves provided for review")
-    reviewer = GameReviewer(depth=min(4, max(1, req.depth)))
-    report = reviewer.review_game(req.moves, req.initial_fen)
+
+    # Validate moves list upfront – catch bad UCI before dispatching to thread
+    import chess as _chess
+    board_check = _chess.Board()
+    for m in req.moves:
+        try:
+            mo = _chess.Move.from_uci(m)
+            if mo not in board_check.legal_moves:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Illegal move '{m}' at ply {board_check.fullmove_number}. Send the game's UCI move list."
+                )
+            board_check.push(mo)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid UCI move string: '{m}'")
+
+    # Cap depth: depth 2 is fast and accurate enough for coaching
+    depth = min(3, max(1, req.depth))
+
+    def _run():
+        reviewer = GameReviewer(depth=depth)
+        return reviewer.review_game(req.moves, req.initial_fen)
+
+    try:
+        report = await asyncio.to_thread(_run)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Analysis error: {exc}")
+
     return report
 
 

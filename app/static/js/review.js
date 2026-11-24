@@ -39,16 +39,20 @@ class GameReviewManager {
             };
         }
 
-        // Stepper buttons
-        document.getElementById('rev-btn-first').onclick = () => this.jumpToPly(0);
-        document.getElementById('rev-btn-prev').onclick = () => this.jumpToPly(this.currentPlyIdx - 1);
-        document.getElementById('rev-btn-next').onclick = () => this.jumpToPly(this.currentPlyIdx + 1);
-        document.getElementById('rev-btn-last').onclick = () => {
+        // Stepper buttons – guard each in case DOM hasn't rendered yet
+        const safeClick = (id, fn) => {
+            const el = document.getElementById(id);
+            if (el) el.onclick = fn;
+        };
+        safeClick('rev-btn-first', () => this.jumpToPly(0));
+        safeClick('rev-btn-prev', () => this.jumpToPly(this.currentPlyIdx - 1));
+        safeClick('rev-btn-next', () => this.jumpToPly(this.currentPlyIdx + 1));
+        safeClick('rev-btn-last', () => {
             if (this.reviewData && this.reviewData.moves.length > 0) {
                 this.jumpToPly(this.reviewData.moves.length - 1);
             }
-        };
-        document.getElementById('rev-btn-next-mistake').onclick = () => this.jumpToNextMistake();
+        });
+        safeClick('rev-btn-next-mistake', () => this.jumpToNextMistake());
 
         // Canvas setup for eval graph
         this.canvas = document.getElementById('review-eval-chart');
@@ -70,22 +74,42 @@ class GameReviewManager {
 
         reviewModal.classList.add('active');
         loadingEl.style.display = 'block';
+        loadingEl.innerHTML = `
+            <div class="review-spinner"></div>
+            <p>⏳ Analyzing ${window.app.movesList.length} moves at depth 2…</p>
+        `;
         contentEl.style.display = 'none';
+
+        // Abort after 90 s to avoid hanging indefinitely
+        const controller = new AbortController();
+        const abortTimer = setTimeout(() => controller.abort(), 90000);
 
         try {
             const res = await fetch('/api/game/review', {
+                signal: controller.signal,
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     moves: window.app.movesList,
                     initial_fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                    depth: 3
+                    depth: 2
                 })
             });
+            clearTimeout(abortTimer);
 
             if (!res.ok) {
-                alert("Failed to analyze game. Please try again.");
+                let detail = "Please try again.";
+                try { const err = await res.json(); detail = err.detail || detail; } catch (_) {}
                 loadingEl.style.display = 'none';
+                contentEl.innerHTML = `
+                    <div style="color:#ef4444;padding:30px;text-align:center;">
+                        <h3>❌ Analysis Failed</h3>
+                        <p>${detail}</p>
+                        <button class="btn btn-primary" onclick="window.gameReviewManager.startReview()" style="margin-top:12px;">
+                            🔄 Retry
+                        </button>
+                    </div>`;
+                contentEl.style.display = 'block';
                 return;
             }
 
@@ -105,8 +129,21 @@ class GameReviewManager {
             this.jumpToPly(startPly);
 
         } catch (e) {
+            clearTimeout(abortTimer);
             console.error("Game review error:", e);
             loadingEl.style.display = 'none';
+            const msg = e.name === 'AbortError'
+                ? '⏱️ Analysis timed out (> 90 s). Try playing fewer moves or reload the page.'
+                : `Unexpected error: ${e.message}`;
+            contentEl.innerHTML = `
+                <div style="color:#f59e0b;padding:30px;text-align:center;">
+                    <h3>⚠️ Review Error</h3>
+                    <p>${msg}</p>
+                    <button class="btn btn-primary" onclick="window.gameReviewManager.startReview()" style="margin-top:12px;">
+                        🔄 Retry
+                    </button>
+                </div>`;
+            contentEl.style.display = 'block';
         }
     }
 

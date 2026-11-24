@@ -62,8 +62,9 @@ class TestServerAPI(unittest.TestCase):
         self.assertIn("mobility_weight", res)
 
     def test_review_game_endpoint(self):
+        import asyncio
         req = ReviewRequest(moves=["e2e4", "e7e5", "g1f3", "b8c6"], depth=2)
-        res = review_game(req)
+        res = asyncio.run(review_game(req))
         self.assertIn("summary", res)
         self.assertIn("moves", res)
         self.assertIn("eval_history", res)

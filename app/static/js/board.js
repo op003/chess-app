@@ -21,6 +21,7 @@ class ChessBoard {
         this.legalMovesForSelected = [];
         this.lastMove = null; // { from, to }
         this.checkSquare = null;
+        this.bestMoveHighlight = null; // { from, to }
 
         this.moveHistory = []; // list of { from, to, san, uci, piece, captured }
         this.pendingPromotion = null; // { from, to }
@@ -588,6 +589,14 @@ class ChessBoard {
         this.render();
     }
 
+    setBestMoveHighlight(fromIdx, toIdx) {
+        this.bestMoveHighlight = { from: fromIdx, to: toIdx };
+    }
+
+    clearBestMoveHighlight() {
+        this.bestMoveHighlight = null;
+    }
+
     render() {
         if (!this.container) return;
         this.container.innerHTML = '';
@@ -619,6 +628,10 @@ class ChessBoard {
                 }
                 if (this.checkSquare === idx) {
                     sqEl.classList.add('in-check');
+                }
+                if (this.bestMoveHighlight) {
+                    if (this.bestMoveHighlight.from === idx) sqEl.classList.add('best-move-from');
+                    if (this.bestMoveHighlight.to === idx) sqEl.classList.add('best-move-to');
                 }
 
                 // Legal move markers

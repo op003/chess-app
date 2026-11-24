@@ -44,7 +44,25 @@ Unlike conventional engines that shy away from gambits due to strict pawn counti
 
 ---
 
-### 4. 🎮 Rich Interactive Chess UI
+### 4. 📊 Game Review & Precision Accuracy Analysis
+* **Full-Game Post-Mortem**: Analyzes games ply-by-ply comparing each move against the engine's best lines.
+* **Accuracy Percentage (0–100%)**: Computes CAPS2-style win percentage preservation for White and Black.
+* **Move Quality Classifications**:
+  * 💎 **Brilliant (!!)**: Tactical piece sacrifice leading to a winning initiative.
+  * ⭐ **Best Move (★)**: Engine's highest-scoring continuation.
+  * ✨ **Excellent**: Very strong, natural tactical play.
+  * 👍 **Good**: Solid move maintaining the evaluation.
+  * 📖 **Book Move**: Matches established gambit opening theory.
+  * ⚠️ **Inaccuracy (?!)**: Suboptimal play conceding minor pressure.
+  * ❓ **Mistake (?)**: Concedes significant counterplay or drops advantage.
+  * ❌ **Blunder (??)**: Severe error or tactical oversight.
+* **Interactive Evaluation Graph**: Visualizes the flow of the game with color-coded classification markers. Clicking any point scrubs the board directly to that position.
+* **Visual Best Move Hints**: Highlights the square and destination the player should have chosen to learn from mistakes.
+* **"Next Key Move" Navigation**: Jump directly to blunders and turning points.
+
+---
+
+### 5. 🎮 Rich Interactive Chess UI
 * **High-DPI Vector Pieces**: Crisp SVG pieces for all screen resolutions.
 * **Interactive Board**: Click-to-move, legal move indicator dots, capture target rings, last move highlight, and king-in-check alerts.
 * **Dynamic Evaluation Meter**: Live vertical centipawn evaluation bar.

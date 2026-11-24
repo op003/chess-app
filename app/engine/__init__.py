@@ -6,6 +6,7 @@ from .openings import GAMBITS, get_gambit_move, get_gambit_by_id
 from .search import SearchEngine
 from .bot import ChessBot, BOT_PERSONALITIES
 from .trainer import BotTrainer
+from .reviewer import GameReviewer
 
 __all__ = [
     "Evaluator",
@@ -17,4 +18,5 @@ __all__ = [
     "ChessBot",
     "BOT_PERSONALITIES",
     "BotTrainer",
+    "GameReviewer",
 ]

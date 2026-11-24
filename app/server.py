@@ -15,6 +15,7 @@ from app.engine.openings import GAMBITS, get_gambit_by_id
 from app.engine.bot import ChessBot, BOT_PERSONALITIES
 from app.engine.evaluator import Evaluator, EvalWeights
 from app.engine.trainer import BotTrainer
+from app.engine.reviewer import GameReviewer
 
 app = FastAPI(title="Gambit Master Chess & AI Training Lab")
 
@@ -51,6 +52,12 @@ class EvalRequest(BaseModel):
 
 class WeightsUpdateRequest(BaseModel):
     weights: Dict[str, Any]
+
+
+class ReviewRequest(BaseModel):
+    moves: List[str]
+    initial_fen: Optional[str] = None
+    depth: int = 3
 
 
 # ==================== API ENDPOINTS ====================
@@ -201,6 +208,19 @@ def save_trained_weights(req: WeightsUpdateRequest):
         return {"status": "success", "weights": weights.to_dict()}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to save weights: {e}")
+
+
+@app.post("/api/game/review")
+def review_game(req: ReviewRequest):
+    """
+    Analyzes an entire played game move-by-move.
+    Generates move classifications, accuracy scores, and eval history.
+    """
+    if not req.moves:
+        raise HTTPException(status_code=400, detail="No moves provided for review")
+    reviewer = GameReviewer(depth=min(4, max(1, req.depth)))
+    report = reviewer.review_game(req.moves, req.initial_fen)
+    return report
 
 
 # ==================== WEBSOCKET TRAINING LAB ====================

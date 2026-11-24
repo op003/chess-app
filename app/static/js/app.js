@@ -24,8 +24,9 @@ class GambitChessApp {
         await window.gambitManager.loadGambits();
         await this.loadPersonalities();
 
-        // Initialize Training Lab
+        // Initialize Training Lab & Game Review
         window.trainingLab.init();
+        window.gameReviewManager.init();
 
         this.bindEvents();
         this.updateStatus();

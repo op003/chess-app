@@ -15,6 +15,9 @@
             <span class="tagline">Top Gambit Styles & AI Trainer</span>
         </div>
         <div class="nav-actions">
+            <button class="btn btn-review" id="btn-open-review">
+                📊 Game Review
+            </button>
             <button class="btn btn-training" id="btn-open-training">
                 🧬 AI Training Lab
             </button>
@@ -122,6 +125,10 @@
                     <button class="btn btn-primary" id="btn-new-game-black">🛡️ Play as Black</button>
                     <button class="btn btn-secondary" id="btn-flip-board">🔄 Flip Board</button>
                 </div>
+
+                <button class="btn btn-review" id="btn-review-game-bottom" style="width:100%; margin-top:8px;">
+                    📊 Review This Game
+                </button>
             </div>
         </section>
     </main>
@@ -206,11 +213,90 @@
         </div>
     </div>
 
+    <!-- Game Review Modal -->
+    <div class="modal-overlay" id="review-modal">
+        <div class="modal-box review-modal-box">
+            <div class="modal-header">
+                <h2>📊 Comprehensive Game Review</h2>
+                <button class="modal-close" id="btn-close-review">&times;</button>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="review-loading" style="display:none; text-align:center; padding: 40px 0;">
+                <div class="review-spinner"></div>
+                <h3 style="margin-top:14px; font-size:16px; color:#38bdf8;">Analyzing Every Move with Engine...</h3>
+                <p style="color:#94a3b8; font-size:13px; margin-top:6px;">Computing tactical accuracy, finding brilliant sacrifices, and identifying missed opportunities.</p>
+            </div>
+
+            <!-- Review Content -->
+            <div id="review-content" style="display:none;">
+                <!-- Accuracy Comparison Card -->
+                <div class="rev-accuracy-card">
+                    <div class="rev-acc-col">
+                        <span class="rev-acc-label">White Accuracy</span>
+                        <span class="rev-acc-val" id="rev-white-acc">0.0%</span>
+                        <div class="rev-acc-bar-bg">
+                            <div class="rev-acc-bar-fill" id="rev-white-acc-bar"></div>
+                        </div>
+                    </div>
+                    <div class="rev-acc-divider">VS</div>
+                    <div class="rev-acc-col">
+                        <span class="rev-acc-label">Black Accuracy</span>
+                        <span class="rev-acc-val" id="rev-black-acc">0.0%</span>
+                        <div class="rev-acc-bar-bg">
+                            <div class="rev-acc-bar-fill" id="rev-black-acc-bar" style="background: linear-gradient(90deg, #38bdf8, #818cf8);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Evaluation Graph -->
+                <div class="rev-chart-container">
+                    <div class="rev-chart-header">
+                        <span>Evaluation Flow (Click point to jump)</span>
+                        <span style="font-size:11px; color:#94a3b8;">+6.0 (White) ↕ -6.0 (Black)</span>
+                    </div>
+                    <canvas id="review-eval-chart" height="110" style="width:100%; height:110px;"></canvas>
+                </div>
+
+                <!-- Stepper & Move Review Card -->
+                <div class="rev-stepper-box">
+                    <div class="rev-stepper-controls">
+                        <button class="btn btn-secondary btn-sm" id="rev-btn-first" title="First Move">⏮️</button>
+                        <button class="btn btn-secondary btn-sm" id="rev-btn-prev" title="Previous Move">◀️ Prev</button>
+                        <button class="btn btn-secondary btn-sm" id="rev-btn-next" title="Next Move">Next ▶️</button>
+                        <button class="btn btn-secondary btn-sm" id="rev-btn-last" title="Last Move">⏭️</button>
+                        <button class="btn btn-primary btn-sm" id="rev-btn-next-mistake" style="margin-left:auto;">
+                            🚨 Next Key Move
+                        </button>
+                    </div>
+
+                    <!-- Active Move Detail Card -->
+                    <div class="rev-move-card" id="rev-move-card">
+                        <!-- Populated by review.js -->
+                    </div>
+                </div>
+
+                <!-- Move Classification Breakdown -->
+                <div class="rev-breakdown-container">
+                    <div class="rev-breakdown-header">
+                        <span>White</span>
+                        <span>Move Quality Breakdown</span>
+                        <span>Black</span>
+                    </div>
+                    <div id="rev-breakdown-body">
+                        <!-- Populated by review.js -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="/static/js/pieces.js"></script>
     <script src="/static/js/sounds.js"></script>
     <script src="/static/js/gambits.js"></script>
     <script src="/static/js/training.js"></script>
+    <script src="/static/js/review.js"></script>
     <script src="/static/js/board.js"></script>
     <script src="/static/js/app.js"></script>
 </body>

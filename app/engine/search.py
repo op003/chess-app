@@ -133,8 +133,11 @@ class SearchEngine:
 
         for move in ordered_captures:
             board.push(move)
-            score = -self.quiescence_search(board, -beta, -alpha, qply + 1)
-            board.pop()
+            try:
+                score = -self.quiescence_search(board, -beta, -alpha, qply + 1)
+            finally:
+                # Always restore the board, even if SearchTimeout unwinds the stack
+                board.pop()
 
             if score >= beta:
                 return beta
@@ -188,8 +191,11 @@ class SearchEngine:
 
         for move in ordered_moves:
             board.push(move)
-            score = -self.alpha_beta(board, depth - 1, -beta, -alpha, ply + 1)
-            board.pop()
+            try:
+                score = -self.alpha_beta(board, depth - 1, -beta, -alpha, ply + 1)
+            finally:
+                # Always restore the board, even if SearchTimeout unwinds the stack
+                board.pop()
 
             if score > best_score:
                 best_score = score
@@ -226,6 +232,9 @@ class SearchEngine:
         """
         Finds the best move using iterative deepening up to specified depth and time limit.
         """
+        # Search on a private copy so the caller's board can never be left mutated
+        board = board.copy()
+
         self.nodes_searched = 0
         self.start_time = time.time()
         self.time_limit = max_time

@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+tests/test_regressions.py
+app/engine/bot.py
+app/engine/search.py
+app/engine/search.py
+app/engine/bot.py

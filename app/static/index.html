@@ -2288,23 +2288,23 @@ class ChessBoard {
             // Castling
             if (isWhite && f === 4 && r === 0) {
                 // Kingside
-                if (this.castling.K && !this.squares[5] && !this.squares[6] &&
+                if (this.castling.K && this.squares[7] === 'R' && !this.squares[5] && !this.squares[6] &&
                     !this.isSquareAttacked(4, false) && !this.isSquareAttacked(5, false) && !this.isSquareAttacked(6, false)) {
                     moves.push({ from: fromIdx, to: 6, castle: 'K' });
                 }
                 // Queenside
-                if (this.castling.Q && !this.squares[1] && !this.squares[2] && !this.squares[3] &&
+                if (this.castling.Q && this.squares[0] === 'R' && !this.squares[1] && !this.squares[2] && !this.squares[3] &&
                     !this.isSquareAttacked(4, false) && !this.isSquareAttacked(3, false) && !this.isSquareAttacked(2, false)) {
                     moves.push({ from: fromIdx, to: 2, castle: 'Q' });
                 }
             } else if (!isWhite && f === 4 && r === 7) {
                 // Kingside
-                if (this.castling.k && !this.squares[61] && !this.squares[62] &&
+                if (this.castling.k && this.squares[63] === 'r' && !this.squares[61] && !this.squares[62] &&
                     !this.isSquareAttacked(60, true) && !this.isSquareAttacked(61, true) && !this.isSquareAttacked(62, true)) {
                     moves.push({ from: fromIdx, to: 62, castle: 'k' });
                 }
                 // Queenside
-                if (this.castling.q && !this.squares[57] && !this.squares[58] && !this.squares[59] &&
+                if (this.castling.q && this.squares[56] === 'r' && !this.squares[57] && !this.squares[58] && !this.squares[59] &&
                     !this.isSquareAttacked(60, true) && !this.isSquareAttacked(59, true) && !this.isSquareAttacked(58, true)) {
                     moves.push({ from: fromIdx, to: 58, castle: 'q' });
                 }
@@ -2415,6 +2415,13 @@ class ChessBoard {
         if (fromIdx === 56 || toIdx === 56) this.castling.q = false;
         if (fromIdx === 63 || toIdx === 63) this.castling.k = false;
 
+        // Update halfmove clock (reset on pawn move or capture)
+        if (piece.toUpperCase() === 'P' || capturedPiece || move.enPassant) {
+            this.halfmoveClock = 0;
+        } else {
+            this.halfmoveClock++;
+        }
+
         // Construct SAN & UCI
         const uci = ChessBoard.indexToAlgebraic(fromIdx) + ChessBoard.indexToAlgebraic(toIdx) + (move.promo ? promotionChoice.toLowerCase() : '');
         this.lastMove = { from: fromIdx, to: toIdx };
@@ -2486,14 +2493,39 @@ class ChessBoard {
             if (fromIdx === 60 && toIdx === 58) { this.squares[59] = 'r'; this.squares[56] = null; }
         }
 
-        // Check en passant
-        if (piece.toUpperCase() === 'P' && toIdx === this.enPassant) {
+        // Check en passant (pawn moving diagonally onto an empty square)
+        const isPawn = piece.toUpperCase() === 'P';
+        const isEnPassant = isPawn && !capturedPiece && (fromIdx % 8) !== (toIdx % 8);
+        if (isEnPassant) {
             const epSq = toIdx + (isWhite ? -8 : 8);
             this.squares[epSq] = null;
         }
 
+        // Update en passant target square (set after a double pawn push, cleared otherwise)
+        if (isPawn && Math.abs(toIdx - fromIdx) === 16) {
+            this.enPassant = fromIdx + (isWhite ? 8 : -8);
+        } else {
+            this.enPassant = null;
+        }
+
+        // Update castling rights (king moves, or a rook moves/is captured on its home square)
+        if (piece === 'K') { this.castling.K = false; this.castling.Q = false; }
+        if (piece === 'k') { this.castling.k = false; this.castling.q = false; }
+        if (fromIdx === 0 || toIdx === 0) this.castling.Q = false;
+        if (fromIdx === 7 || toIdx === 7) this.castling.K = false;
+        if (fromIdx === 56 || toIdx === 56) this.castling.q = false;
+        if (fromIdx === 63 || toIdx === 63) this.castling.k = false;
+
+        // Update move clocks
+        if (isPawn || capturedPiece || isEnPassant) {
+            this.halfmoveClock = 0;
+        } else {
+            this.halfmoveClock++;
+        }
+
         this.lastMove = { from: fromIdx, to: toIdx };
         this.turn = (this.turn === 'w') ? 'b' : 'w';
+        if (this.turn === 'w') this.fullmoveNumber++;
         this.updateCheckState();
         this.render();
 

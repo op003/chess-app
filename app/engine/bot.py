@@ -144,6 +144,17 @@ class ChessBot:
     def update_weights(self, weights: EvalWeights):
         self.evaluator.update_weights(weights)
 
+    @staticmethod
+    def _history_matches_board(move_history_uci: List[str], board: chess.Board) -> bool:
+        """True if replaying the UCI history from the start position reproduces `board`."""
+        try:
+            replay = chess.Board()
+            for uci in move_history_uci:
+                replay.push_uci(uci)
+        except Exception:
+            return False
+        return replay.epd() == board.epd()
+
     def choose_move(
         self,
         board: chess.Board,
@@ -162,17 +173,19 @@ class ChessBot:
         else:
             move_history_uci = [m.uci() for m in board.move_stack]
 
-        # 1. Opening book check
-        book_move_uci, matched_gambit_name = find_gambit_continuation_with_name(
-            move_history_uci, self.preferred_gambit_id
-        )
+        # 1. Opening book check (only if the move history really leads to this position;
+        #    otherwise e.g. an empty history on a mid-game FEN would "match" the first book move)
+        book_move_uci, matched_gambit_name = (None, None)
+        if self._history_matches_board(move_history_uci, board):
+            book_move_uci, matched_gambit_name = find_gambit_continuation_with_name(
+                move_history_uci, self.preferred_gambit_id
+            )
         if book_move_uci:
             try:
                 book_move = chess.Move.from_uci(book_move_uci)
                 if book_move in board.legal_moves:
-                    # Found valid book move
-                    current_gambit = get_gambit_by_id(self.preferred_gambit_id) if self.preferred_gambit_id else None
-                    gambit_name = (current_gambit["name"] if current_gambit else None) or matched_gambit_name or "Book Gambit"
+                    # Found valid book move; report the gambit the move actually came from
+                    gambit_name = matched_gambit_name or "Book Gambit"
                     white_eval = self.evaluator.evaluate(board)
                     side_eval = white_eval if board.turn == chess.WHITE else -white_eval
                     return book_move, {

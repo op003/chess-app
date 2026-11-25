@@ -1,0 +1,19 @@
+{
+  "name": "Trained Garry Kasparov (The Boss) (Gen 6)",
+  "pawn_val": 106.09,
+  "knight_val": 292.17,
+  "bishop_val": 331.25,
+  "rook_val": 505.0,
+  "queen_val": 915.0,
+  "pst_weight": 1.0,
+  "mobility_weight": 9.26,
+  "center_control_weight": 27.19,
+  "king_attack_weight": 26.0,
+  "king_safety_weight": 18.66,
+  "development_weight": 19.81,
+  "open_file_weight": 21.69,
+  "bishop_pair_weight": 42.99,
+  "passed_pawn_weight": 20.02,
+  "pawn_structure_weight": -12.0,
+  "gambit_aggression": 1.5
+}

@@ -258,6 +258,8 @@ def main():
     parser.add_argument("--out", type=str, default="tournament", help="Output directory")
     parser.add_argument("--resume", action="store_true",
                         help="Rebuild ratings from existing games.jsonl and continue after the last cycle")
+    parser.add_argument("--use-trained", action="store_true",
+                        help="Each style plays with its trained weights (weights/trained_<id>.json) when available")
     args = parser.parse_args()
 
     config = {
@@ -275,7 +277,18 @@ def main():
     signal.signal(signal.SIGINT, running.stop)
 
     pool_ids = list(BOT_PERSONALITIES.keys())
-    bots = {pid: ChessBot(pid) for pid in pool_ids}
+    bots = {}
+    for pid in pool_ids:
+        custom = None
+        if args.use_trained:
+            weights_path = os.path.join("weights", f"trained_{pid}.json")
+            if os.path.exists(weights_path):
+                try:
+                    custom = EvalWeights.load(weights_path)
+                    print(f"    🧬 {pid}: using trained weights from {weights_path}")
+                except Exception:
+                    custom = None
+        bots[pid] = ChessBot(pid, custom_weights=custom)
     stats = new_stats()
     seeds = build_seeds()
     neutral_eval = Evaluator(EvalWeights())

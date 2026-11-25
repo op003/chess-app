@@ -49,6 +49,33 @@ The lineup can be pruned to the strongest styles using the built-in arena tourna
 
 ---
 
+### 3c. 🏆 Arena Results & Selection (Nov 2026)
+
+A 279-game double round-robin (8 gambit openings × both colors, depth 3, neutral adjudication) ranked every style:
+
+| Rank | Style | Elo | Win% | Trained? | Verification gate vs preset |
+|---|---|---|---|---|---|
+| 🥇 | 🤖 Custom Trained AI Bot | 1623 | 73.5% | ✅ | 50.0% — adopted |
+| 🥈 | 👑 Garry Kasparov (The Boss) | 1514 | 51.1% | ✅ | 68.8% — adopted |
+| 🥉 | ⚔️ Paul Morphy (The Romantic) | 1502 | 55.4% | ✅ | 43.8% — adopted |
+| 4 | 🎯 The Trap Master | 1494 | 47.2% | ✅ | 25.0% — **rejected**, preset kept |
+| 5 | 🧙‍♂️ Mikhail Tal (The Magician) | 1482 | 41.9% | ✅ | 75.0% — adopted |
+| 6 | 👽 Alien Gambit (The Invader) | 1385 | 32.2% | — (kept for brilliant-sacrifice flavor) | |
+
+Full game log: `tournament/games.jsonl`, live standings: `tournament/standings.json`.
+The five winning styles were then evolution-trained (`train_selected.py`) and each new
+weight set had to **beat its own preset in a verification match** before being adopted —
+Trained, Kasparov, Morphy and Tal passed; Trap Master's mutant regressed and was
+automatically rejected. Final-lineup validation runs in `tournament_final/`.
+
+**Final validation (283 games with the trained lineup):** the trained styles climbed —
+Morphy 55% → **62%**, Tal 42% → **47%** (5th → 3rd place), Custom Trained held the crown
+at 67% — while the strongest styles also show higher draw rates, i.e. more careful,
+harder-to-beat play. The final game roster is the five winners **plus** the new
+Alien Gambit style.
+
+---
+
 ### 3b. ⚔️ Arena Tournament (`arena.py`)
 Rank every playing style against every other style in a long-running double round-robin:
 ```bash

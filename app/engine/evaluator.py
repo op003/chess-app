@@ -92,6 +92,7 @@ class EvalWeights:
     mobility_weight: float = 8.0          # High mobility rewards open files & active pieces
     center_control_weight: float = 15.0   # Dominating e4, d4, e5, d5
     king_attack_weight: float = 24.0      # Weight for aiming attacks near enemy king
+    king_safety_weight: float = 18.0      # Penalty for a naked king (missing pawn shield) — careful play
     development_weight: float = 18.0      # Knights & bishops off home rank
     open_file_weight: float = 16.0        # Rooks on open and half-open files
     bishop_pair_weight: float = 40.0      # Having both bishops
@@ -232,6 +233,34 @@ class Evaluator:
             for ring_sq in w_king_ring:
                 black_attack_pressure += len(board.attackers(chess.BLACK, ring_sq))
             score -= black_attack_pressure * w.king_attack_weight * w.gambit_aggression
+
+        # 5b. King Safety — missing pawn shield in front of the king ("careful play" term)
+        king_safety = w.king_safety_weight
+        if king_safety:
+            for color, king_sq in ((chess.WHITE, w_king_sq), (chess.BLACK, b_king_sq)):
+                if king_sq is None:
+                    continue
+                k_file = chess.square_file(king_sq)
+                k_rank = chess.square_rank(king_sq)
+                step = 1 if color == chess.WHITE else -1
+                shield_penalty = 0.0
+                for df in (-1, 0, 1):
+                    f = k_file + df
+                    if 0 <= f <= 7:
+                        near = k_rank + step
+                        if 0 <= near <= 7:
+                            piece = board.piece_at(chess.square(f, near))
+                            if piece is None or piece.piece_type != chess.PAWN or piece.color != color:
+                                shield_penalty += 1.0
+                        far = k_rank + 2 * step
+                        if 0 <= far <= 7:
+                            piece = board.piece_at(chess.square(f, far))
+                            if piece is None or piece.piece_type != chess.PAWN or piece.color != color:
+                                shield_penalty += 0.5
+                if color == chess.WHITE:
+                    score -= shield_penalty * king_safety
+                else:
+                    score += shield_penalty * king_safety
 
         # 6. Open Files for Rooks
         for sq in board.pieces(chess.ROOK, chess.WHITE):

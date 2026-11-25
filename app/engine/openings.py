@@ -250,6 +250,40 @@ GAMBITS: Dict[str, dict] = {
         ],
         "trap_example": "Black's king gets caught in center under raging pawn storm."
     },
+    "alien_gambit": {
+        "id": "alien_gambit",
+        "name": "Alien Gambit",
+        "color": "white",
+        "eco": "B12",
+        "subtitle": "The Witty Alien Knight Sacrifice",
+        "moves": ["e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4", "g8f6", "e4g5", "h7h6", "g5f7", "e8f7", "g1f3"],
+        "san_moves": ["1. e4", "c6", "2. d4", "d5", "3. Nc3", "dxe4", "4. Nxe4", "Nf6", "5. Ng5", "h6", "6. Nxf7!", "Kxf7", "7. Nf3"],
+        "description": "Invented by CM Volen Dyulgerov ('Witty_Alien') in the Caro-Kann. White refuses to retreat the knight and instead plays the brilliant Nxf7!! sacrifice, dragging Black's king into the open for a devastating queen-and-bishop attack.",
+        "key_ideas": [
+            "Refuse to retreat the g5-knight — sacrifice it on f7 instead",
+            "Drag Black's king to f7 where it is exposed forever",
+            "Rapid development (Nf3, Bc4+) before Black can castle or regroup",
+            "Hunt the naked king with Qd8+style checks and heavy pieces"
+        ],
+        "variations": [
+            {
+                "name": "Main Line - King Hunt",
+                "moves": ["e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4", "g8f6", "e4g5", "h7h6", "g5f7", "e8f7", "g1f3", "b8c6", "f1c4", "f8d6", "d1d8"],
+                "note": "Queen infiltration with Bc4+ pressure against the exposed king."
+            },
+            {
+                "name": "Martian Gambit (vs 4...Bf5)",
+                "moves": ["e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4", "c8f5", "e4g3", "f5g6", "h2h4"],
+                "note": "Sibling sacrifice system when Black develops the bishop early."
+            },
+            {
+                "name": "Slow Setup (vs 5...Bf5)",
+                "moves": ["e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4", "g8f6", "e4g5", "c8f5", "f1c4", "e7e6", "g1e2"],
+                "note": "If Black refuses h6/Nxf7, White keeps a big development lead instead."
+            }
+        ],
+        "trap_example": "6.Nxf7!! Kxf7 7.Nf3! and 8.Bc4+ lands with unstoppable king-hunt threats."
+    },
 
     # ==================== BLACK GAMBITS ====================
     "stafford_gambit": {

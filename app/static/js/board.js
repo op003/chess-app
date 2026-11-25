@@ -389,7 +389,7 @@ class ChessBoard {
         return legalMoves;
     }
 
-    makeMove(fromIdx, toIdx, promotionChoice = null) {
+    makeMove(fromIdx, toIdx, promotionChoice = null, fromPromotionDialog = false) {
         const piece = this.squares[fromIdx];
         if (!piece) return false;
 
@@ -397,12 +397,15 @@ class ChessBoard {
         const move = legal.find(m => m.to === toIdx);
         if (!move) return false;
 
-        // Check if promotion is required (only intercept on first call, not when replaying with a chosen piece)
-        if (move.promo && promotionChoice === null) {
+        // Check if promotion is required (only intercept on first call; the dialog
+        // replays with fromPromotionDialog=true so it never re-opens the dialog)
+        if (move.promo && !fromPromotionDialog) {
+            if (!promotionChoice) promotionChoice = 'q';
             this.pendingPromotion = { from: fromIdx, to: toIdx };
             this.showPromotionDialog(this.turn === 'w');
             return true;
         }
+        if (move.promo && !promotionChoice) promotionChoice = 'q';
 
         const isWhite = this.isWhitePiece(piece);
         const capturedPiece = this.squares[toIdx];
@@ -616,7 +619,7 @@ class ChessBoard {
                 if (this.pendingPromotion) {
                     const { from, to } = this.pendingPromotion;
                     this.pendingPromotion = null;
-                    this.makeMove(from, to, choice);
+                    this.makeMove(from, to, choice, true);
                 }
             };
         });

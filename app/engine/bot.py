@@ -100,6 +100,30 @@ BOT_PERSONALITIES: Dict[str, Dict[str, Any]] = {
             gambit_aggression=2.2
         )
     },
+    "alien_gambit": {
+        "id": "alien_gambit",
+        "name": "Alien Gambit (The Invader)",
+        "avatar": "👽",
+        "description": "Obsessed with brilliant knight sacrifices like the Alien Gambit Nxf7!! — hunts the enemy king with stunning, engine-approved sacrifices.",
+        "preferred_gambits": ["alien_gambit", "halloween_gambit", "danish_gambit"],
+        "default_depth": 4,
+        "weights": EvalWeights(
+            name="Alien Gambit",
+            pawn_val=78.0,            # Material means nothing — brilliance means everything
+            knight_val=330.0,
+            bishop_val=340.0,
+            rook_val=480.0,
+            queen_val=940.0,
+            mobility_weight=16.0,
+            center_control_weight=18.0,
+            king_attack_weight=44.0,  # Highest attack pressure of any style
+            king_safety_weight=5.0,   # Ignores its own king's safety entirely
+            development_weight=26.0,
+            open_file_weight=20.0,
+            bishop_pair_weight=40.0,
+            gambit_aggression=3.0     # 300% tactical aggression — brilliant sacrifice machine
+        )
+    },
     "trained": {
         "id": "trained",
         "name": "Custom Trained AI Bot",
@@ -115,7 +139,7 @@ BOT_PERSONALITIES: Dict[str, Dict[str, Any]] = {
 class ChessBot:
     def __init__(self, personality_id: str = "tal", custom_weights: Optional[EvalWeights] = None):
         self.personality_id = personality_id
-        personality = BOT_PERSONALITIES.get(personality_id, BOT_PERSONALITIES["tal"])
+        personality = BOT_PERSONALITIES.get(personality_id) or next(iter(BOT_PERSONALITIES.values()))
         self.personality = personality
         self.name = personality["name"]
         self.avatar = personality["avatar"]

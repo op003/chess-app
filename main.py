@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#ใช้Python3
 """
 Main launcher for Gambit Master Chess & AI Training Lab.
 """
@@ -6,7 +6,7 @@ import sys
 import os
 import uvicorn
 
-# Ensure the root folder is in python path
+# สำหรับการแก้ไขปัญหาเกี่ยวกับการนำเข้าโมดูลในโฟลเดอร์เดียวกัน{[บัคบ่อย]}
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 

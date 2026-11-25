@@ -5,7 +5,7 @@ from typing import Optional, Tuple, Dict, Any, List
 import chess
 from .evaluator import Evaluator, EvalWeights
 from .search import SearchEngine
-from .openings import GAMBITS, find_gambit_continuation, get_gambit_by_id
+from .openings import GAMBITS, find_gambit_continuation_with_name, get_gambit_by_id
 
 BOT_PERSONALITIES: Dict[str, Dict[str, Any]] = {
     "tal": {
@@ -144,29 +144,42 @@ class ChessBot:
     def update_weights(self, weights: EvalWeights):
         self.evaluator.update_weights(weights)
 
-    def choose_move(self, board: chess.Board, depth: int = 4, max_time: float = 1.0) -> Tuple[Optional[chess.Move], Dict[str, Any]]:
+    def choose_move(
+        self,
+        board: chess.Board,
+        depth: int = 4,
+        max_time: float = 1.0,
+        move_history: Optional[List[str]] = None
+    ) -> Tuple[Optional[chess.Move], Dict[str, Any]]:
         """
         Chooses the best move for the bot:
         1. Checks opening book for gambit continuations
         2. Falls back to Alpha-Beta search with personality evaluator
         """
-        # Collect move history in UCI
-        move_history_uci = [m.uci() for m in board.move_stack]
+        # Collect move history in UCI (prefer explicit history when board was constructed from FEN)
+        if move_history is not None:
+            move_history_uci = list(move_history)
+        else:
+            move_history_uci = [m.uci() for m in board.move_stack]
 
         # 1. Opening book check
-        book_move_uci = find_gambit_continuation(move_history_uci, self.preferred_gambit_id)
+        book_move_uci, matched_gambit_name = find_gambit_continuation_with_name(
+            move_history_uci, self.preferred_gambit_id
+        )
         if book_move_uci:
             try:
                 book_move = chess.Move.from_uci(book_move_uci)
                 if book_move in board.legal_moves:
                     # Found valid book move
                     current_gambit = get_gambit_by_id(self.preferred_gambit_id) if self.preferred_gambit_id else None
-                    gambit_name = current_gambit["name"] if current_gambit else "Book Gambit"
+                    gambit_name = (current_gambit["name"] if current_gambit else None) or matched_gambit_name or "Book Gambit"
+                    white_eval = self.evaluator.evaluate(board)
+                    side_eval = white_eval if board.turn == chess.WHITE else -white_eval
                     return book_move, {
                         "is_book": True,
                         "gambit_name": gambit_name,
                         "comment": f"Playing {gambit_name} book line!",
-                        "eval_cp": self.evaluator.evaluate(board),
+                        "eval_cp": side_eval,
                         "nodes": 1,
                         "depth": 0,
                         "time": 0.001

@@ -22,6 +22,8 @@ class ChessBoard {
         this.lastMove = null; // { from, to }
         this.checkSquare = null;
         this.bestMoveHighlight = null; // { from, to }
+        this.allowedColor = null; // 'w', 'b', or null (any)
+        this.isLocked = false;
 
         this.moveHistory = []; // list of { from, to, san, uci, piece, captured }
         this.pendingPromotion = null; // { from, to }
@@ -55,12 +57,12 @@ class ChessBoard {
     }
 
     loadFen(fen) {
-        const parts = fen.split(' ');
+        const parts = (fen || INITIAL_FEN).trim().split(/\s+/);
         const rows = parts[0].split('/');
         this.squares.fill(null);
 
         for (let r = 7; r >= 0; r--) {
-            const rowStr = rows[7 - r];
+            const rowStr = rows[7 - r] || '';
             let f = 0;
             for (let i = 0; i < rowStr.length; i++) {
                 const char = rowStr[i];
@@ -85,6 +87,10 @@ class ChessBoard {
         this.enPassant = parts[3] && parts[3] !== '-' ? ChessBoard.algebraicToIndex(parts[3]) : null;
         this.halfmoveClock = parseInt(parts[4], 10) || 0;
         this.fullmoveNumber = parseInt(parts[5], 10) || 1;
+
+        this.selectedSquare = null;
+        this.legalMovesForSelected = [];
+        this.pendingPromotion = null;
 
         this.updateCheckState();
         this.render();
@@ -312,23 +318,23 @@ class ChessBoard {
             // Castling
             if (isWhite && f === 4 && r === 0) {
                 // Kingside
-                if (this.castling.K && !this.squares[5] && !this.squares[6] &&
+                if (this.castling.K && this.squares[7] === 'R' && !this.squares[5] && !this.squares[6] &&
                     !this.isSquareAttacked(4, false) && !this.isSquareAttacked(5, false) && !this.isSquareAttacked(6, false)) {
                     moves.push({ from: fromIdx, to: 6, castle: 'K' });
                 }
                 // Queenside
-                if (this.castling.Q && !this.squares[1] && !this.squares[2] && !this.squares[3] &&
+                if (this.castling.Q && this.squares[0] === 'R' && !this.squares[1] && !this.squares[2] && !this.squares[3] &&
                     !this.isSquareAttacked(4, false) && !this.isSquareAttacked(3, false) && !this.isSquareAttacked(2, false)) {
                     moves.push({ from: fromIdx, to: 2, castle: 'Q' });
                 }
             } else if (!isWhite && f === 4 && r === 7) {
                 // Kingside
-                if (this.castling.k && !this.squares[61] && !this.squares[62] &&
+                if (this.castling.k && this.squares[63] === 'r' && !this.squares[61] && !this.squares[62] &&
                     !this.isSquareAttacked(60, true) && !this.isSquareAttacked(61, true) && !this.isSquareAttacked(62, true)) {
                     moves.push({ from: fromIdx, to: 62, castle: 'k' });
                 }
                 // Queenside
-                if (this.castling.q && !this.squares[57] && !this.squares[58] && !this.squares[59] &&
+                if (this.castling.q && this.squares[56] === 'r' && !this.squares[57] && !this.squares[58] && !this.squares[59] &&
                     !this.isSquareAttacked(60, true) && !this.isSquareAttacked(59, true) && !this.isSquareAttacked(58, true)) {
                     moves.push({ from: fromIdx, to: 58, castle: 'q' });
                 }
@@ -383,7 +389,7 @@ class ChessBoard {
         return legalMoves;
     }
 
-    makeMove(fromIdx, toIdx, promotionChoice = 'q') {
+    makeMove(fromIdx, toIdx, promotionChoice = null) {
         const piece = this.squares[fromIdx];
         if (!piece) return false;
 
@@ -391,8 +397,8 @@ class ChessBoard {
         const move = legal.find(m => m.to === toIdx);
         if (!move) return false;
 
-        // Check if promotion is required
-        if (move.promo && !move.promotionApplied) {
+        // Check if promotion is required (only intercept on first call, not when replaying with a chosen piece)
+        if (move.promo && promotionChoice === null) {
             this.pendingPromotion = { from: fromIdx, to: toIdx };
             this.showPromotionDialog(this.turn === 'w');
             return true;
@@ -400,6 +406,27 @@ class ChessBoard {
 
         const isWhite = this.isWhitePiece(piece);
         const capturedPiece = this.squares[toIdx];
+        const effectiveCaptured = capturedPiece || (move.enPassant ? (isWhite ? 'p' : 'P') : null);
+        const uci = ChessBoard.indexToAlgebraic(fromIdx) + ChessBoard.indexToAlgebraic(toIdx) + (move.promo ? promotionChoice.toLowerCase() : '');
+
+        // Compute SAN before mutating board
+        let san = uci;
+        if (window.FastChessState) {
+            try {
+                const st = window.FastChessState.fromFen(this.getFen());
+                const stMove = {
+                    from: fromIdx,
+                    to: toIdx,
+                    capture: Boolean(effectiveCaptured),
+                    enPassant: Boolean(move.enPassant),
+                    castle: move.castle || null,
+                    promo: move.promo ? promotionChoice.toLowerCase() : null,
+                    doublePawn: Boolean(move.doublePawn),
+                    uci
+                };
+                san = st.moveToSan(stMove);
+            } catch (_) {}
+        }
 
         // Move piece
         this.squares[toIdx] = piece;
@@ -439,8 +466,13 @@ class ChessBoard {
         if (fromIdx === 56 || toIdx === 56) this.castling.q = false;
         if (fromIdx === 63 || toIdx === 63) this.castling.k = false;
 
-        // Construct SAN & UCI
-        const uci = ChessBoard.indexToAlgebraic(fromIdx) + ChessBoard.indexToAlgebraic(toIdx) + (move.promo ? promotionChoice.toLowerCase() : '');
+        // Update halfmove clock
+        if (piece.toUpperCase() === 'P' || effectiveCaptured) {
+            this.halfmoveClock = 0;
+        } else {
+            this.halfmoveClock++;
+        }
+
         this.lastMove = { from: fromIdx, to: toIdx };
 
         // Toggle turn
@@ -457,7 +489,7 @@ class ChessBoard {
             window.sounds.playCheck();
         } else if (move.castle) {
             window.sounds.playCastle();
-        } else if (capturedPiece || move.enPassant) {
+        } else if (effectiveCaptured) {
             window.sounds.playCapture();
         } else {
             window.sounds.playMove();
@@ -468,8 +500,9 @@ class ChessBoard {
                 from: fromIdx,
                 to: toIdx,
                 uci: uci,
+                san: san,
                 fen: this.getFen(),
-                captured: capturedPiece
+                captured: effectiveCaptured
             });
         }
 
@@ -492,6 +525,8 @@ class ChessBoard {
 
         const isWhite = this.isWhitePiece(piece);
         const capturedPiece = this.squares[toIdx];
+        const isEpCapture = (piece.toUpperCase() === 'P' && toIdx === this.enPassant);
+        let isCastle = false;
 
         // Direct apply with full rules
         this.squares[toIdx] = piece;
@@ -504,26 +539,54 @@ class ChessBoard {
 
         // Check castling
         if (piece.toUpperCase() === 'K') {
-            if (fromIdx === 4 && toIdx === 6) { this.squares[5] = 'R'; this.squares[7] = null; }
-            if (fromIdx === 4 && toIdx === 2) { this.squares[3] = 'R'; this.squares[0] = null; }
-            if (fromIdx === 60 && toIdx === 62) { this.squares[61] = 'r'; this.squares[63] = null; }
-            if (fromIdx === 60 && toIdx === 58) { this.squares[59] = 'r'; this.squares[56] = null; }
+            if (fromIdx === 4 && toIdx === 6) { this.squares[5] = 'R'; this.squares[7] = null; isCastle = true; }
+            if (fromIdx === 4 && toIdx === 2) { this.squares[3] = 'R'; this.squares[0] = null; isCastle = true; }
+            if (fromIdx === 60 && toIdx === 62) { this.squares[61] = 'r'; this.squares[63] = null; isCastle = true; }
+            if (fromIdx === 60 && toIdx === 58) { this.squares[59] = 'r'; this.squares[56] = null; isCastle = true; }
         }
 
-        // Check en passant
-        if (piece.toUpperCase() === 'P' && toIdx === this.enPassant) {
+        // Update en passant — handle capture and set new EP square for double pawn push
+        if (isEpCapture) {
             const epSq = toIdx + (isWhite ? -8 : 8);
             this.squares[epSq] = null;
         }
+        // Set en passant square for double pawn push
+        const { rank: fromRank } = ChessBoard.indexToCoords(fromIdx);
+        const { rank: toRank } = ChessBoard.indexToCoords(toIdx);
+        if (piece.toUpperCase() === 'P' && Math.abs(toRank - fromRank) === 2) {
+            this.enPassant = fromIdx + (isWhite ? 8 : -8);
+        } else {
+            this.enPassant = null;
+        }
+
+        // Update castling rights
+        if (piece === 'K') { this.castling.K = false; this.castling.Q = false; }
+        if (piece === 'k') { this.castling.k = false; this.castling.q = false; }
+        if (fromIdx === 0 || toIdx === 0) this.castling.Q = false;
+        if (fromIdx === 7 || toIdx === 7) this.castling.K = false;
+        if (fromIdx === 56 || toIdx === 56) this.castling.q = false;
+        if (fromIdx === 63 || toIdx === 63) this.castling.k = false;
+
+        // Update halfmove clock and fullmove number
+        if (piece.toUpperCase() === 'P' || capturedPiece || isEpCapture) {
+            this.halfmoveClock = 0;
+        } else {
+            this.halfmoveClock++;
+        }
 
         this.lastMove = { from: fromIdx, to: toIdx };
+        this.selectedSquare = null;
+        this.legalMovesForSelected = [];
         this.turn = (this.turn === 'w') ? 'b' : 'w';
+        if (this.turn === 'w') this.fullmoveNumber++;
         this.updateCheckState();
         this.render();
 
         if (this.checkSquare !== null) {
             window.sounds.playCheck();
-        } else if (capturedPiece) {
+        } else if (isCastle) {
+            window.sounds.playCastle();
+        } else if (capturedPiece || isEpCapture) {
             window.sounds.playCapture();
         } else {
             window.sounds.playMove();
@@ -560,6 +623,9 @@ class ChessBoard {
     }
 
     handleSquareClick(idx) {
+        if (this.isLocked) return;
+        if (this.allowedColor && this.turn !== this.allowedColor) return;
+
         const piece = this.squares[idx];
         const isCurrentTurnPiece = piece && ((this.turn === 'w' && this.isWhitePiece(piece)) || (this.turn === 'b' && this.isBlackPiece(piece)));
 

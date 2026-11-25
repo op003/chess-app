@@ -430,10 +430,12 @@ def match_gambit_from_moves(played_moves: List[str]) -> Optional[dict]:
     return None
 
 
-def find_gambit_continuation(played_moves: List[str], preferred_gambit_id: Optional[str] = None) -> Optional[str]:
+def find_gambit_continuation_with_name(
+    played_moves: List[str], preferred_gambit_id: Optional[str] = None
+) -> tuple[Optional[str], Optional[str]]:
     """
-    Given a sequence of played UCI moves, find a book continuation that stays
-    within a gambit repertoire.
+    Given a sequence of played UCI moves, find a book continuation (move_uci, gambit_name)
+    that stays within a gambit repertoire.
     """
     # 1. Try preferred gambit if valid
     if preferred_gambit_id and preferred_gambit_id in GAMBITS:
@@ -441,13 +443,13 @@ def find_gambit_continuation(played_moves: List[str], preferred_gambit_id: Optio
         g_moves = gambit["moves"]
         if len(played_moves) < len(g_moves):
             if g_moves[:len(played_moves)] == played_moves:
-                return g_moves[len(played_moves)]
+                return g_moves[len(played_moves)], gambit["name"]
         # Check variations
         for var in gambit.get("variations", []):
             v_moves = var["moves"]
             if len(played_moves) < len(v_moves):
                 if v_moves[:len(played_moves)] == played_moves:
-                    return v_moves[len(played_moves)]
+                    return v_moves[len(played_moves)], gambit["name"]
 
     # 2. Try any matching gambit
     candidate_continuations = []
@@ -455,14 +457,23 @@ def find_gambit_continuation(played_moves: List[str], preferred_gambit_id: Optio
         g_moves = gambit["moves"]
         if len(played_moves) < len(g_moves):
             if g_moves[:len(played_moves)] == played_moves:
-                candidate_continuations.append(g_moves[len(played_moves)])
+                candidate_continuations.append((g_moves[len(played_moves)], gambit["name"]))
         for var in gambit.get("variations", []):
             v_moves = var["moves"]
             if len(played_moves) < len(v_moves):
                 if v_moves[:len(played_moves)] == played_moves:
-                    candidate_continuations.append(v_moves[len(played_moves)])
+                    candidate_continuations.append((v_moves[len(played_moves)], gambit["name"]))
 
     if candidate_continuations:
         return random.choice(candidate_continuations)
 
-    return None
+    return None, None
+
+
+def find_gambit_continuation(played_moves: List[str], preferred_gambit_id: Optional[str] = None) -> Optional[str]:
+    """
+    Given a sequence of played UCI moves, find a book continuation that stays
+    within a gambit repertoire.
+    """
+    move_uci, _ = find_gambit_continuation_with_name(played_moves, preferred_gambit_id)
+    return move_uci

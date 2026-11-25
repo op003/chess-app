@@ -218,11 +218,12 @@ class GambitChessApp {
             const data = await res.json();
             const botUci = data.move;
 
-            // Track capture by bot
+            // FIX: Track capture by bot — check turn BEFORE applying the move (board.turn is still the bot's turn)
             const toIdx = ChessBoard.algebraicToIndex(botUci.substring(2, 4));
             const targetPiece = this.board.squares[toIdx];
+            const botTurnBeforeMove = this.board.turn;
             if (targetPiece) {
-                if (this.board.turn === 'w') {
+                if (botTurnBeforeMove === 'w') {
                     this.capturedByWhite.push(targetPiece);
                 } else {
                     this.capturedByBlack.push(targetPiece);
@@ -284,10 +285,16 @@ class GambitChessApp {
     }
 
     checkGameOver() {
-        // Simple game over check based on check state & legal moves count
+        // Game over check: only count legal moves for the side whose turn it is
         let totalLegalMoves = 0;
+        const currentTurn = this.board.turn;
         for (let i = 0; i < 64; i++) {
+            const piece = this.board.squares[i];
+            if (!piece) continue;
+            const isWhitePiece = this.board.isWhitePiece(piece);
+            if ((currentTurn === 'w' && !isWhitePiece) || (currentTurn === 'b' && isWhitePiece)) continue;
             totalLegalMoves += this.board.getLegalMoves(i).length;
+            if (totalLegalMoves > 0) break; // early exit once we know game is not over
         }
 
         if (totalLegalMoves === 0) {

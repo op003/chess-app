@@ -4,6 +4,7 @@ FastAPI Server for Chess Gambit Game & AI Bot Training.
 import os
 import json
 import asyncio
+import threading
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -24,16 +25,37 @@ TRAINED_WEIGHTS_PATH = os.path.join(os.path.dirname(__file__), "..", "weights", 
 # In-memory bot instances per personality
 bot_instances: Dict[str, ChessBot] = {}
 
+def _load_trained_weights() -> Optional[EvalWeights]:
+    if os.path.exists(TRAINED_WEIGHTS_PATH):
+        try:
+            return EvalWeights.load(TRAINED_WEIGHTS_PATH)
+        except Exception:
+            pass
+    return None
+
+
 def get_or_create_bot(personality_id: str = "tal") -> ChessBot:
     if personality_id not in bot_instances:
-        custom_weights = None
-        if personality_id == "trained" and os.path.exists(TRAINED_WEIGHTS_PATH):
-            try:
-                custom_weights = EvalWeights.load(TRAINED_WEIGHTS_PATH)
-            except Exception:
-                pass
+        custom_weights = _load_trained_weights() if personality_id == "trained" else None
         bot_instances[personality_id] = ChessBot(personality_id, custom_weights=custom_weights)
+    elif personality_id == "trained":
+        disk_weights = _load_trained_weights()
+        if disk_weights is not None:
+            bot_instances["trained"].update_weights(disk_weights)
     return bot_instances[personality_id]
+
+
+# In-memory HTTP training job state (fallback when WebSocket libraries are unavailable)
+_training_lock = threading.Lock()
+_active_http_trainer: Optional[BotTrainer] = None
+_training_state: Dict[str, Any] = {
+    "is_training": False,
+    "state": "idle",
+    "message": "Ready to train.",
+    "progress": None,
+    "weights": None,
+    "error": None,
+}
 
 
 class MoveRequest(BaseModel):
@@ -48,10 +70,17 @@ class MoveRequest(BaseModel):
 class EvalRequest(BaseModel):
     fen: str
     personality: str = "tal"
+    custom_weights: Optional[Dict[str, Any]] = None
 
 
 class WeightsUpdateRequest(BaseModel):
     weights: Dict[str, Any]
+
+
+class TrainStartRequest(BaseModel):
+    generations: int = 3
+    depth: int = 2
+    personality: str = "tal"
 
 
 class ReviewRequest(BaseModel):
@@ -80,7 +109,9 @@ def get_single_gambit(gambit_id: str):
 def get_personalities():
     """Returns list of bot personalities with their descriptions and traits."""
     result = []
+    trained_weights = _load_trained_weights()
     for pid, p in BOT_PERSONALITIES.items():
+        weights = trained_weights if (pid == "trained" and trained_weights is not None) else p["weights"]
         result.append({
             "id": p["id"],
             "name": p["name"],
@@ -88,7 +119,7 @@ def get_personalities():
             "description": p["description"],
             "preferred_gambits": p["preferred_gambits"],
             "default_depth": p["default_depth"],
-            "weights": p["weights"].to_dict()
+            "weights": weights.to_dict()
         })
     return {"personalities": result}
 
@@ -107,15 +138,25 @@ def request_bot_move(req: MoveRequest):
         raise HTTPException(status_code=400, detail="Game is already over")
 
     bot = get_or_create_bot(req.personality)
-    bot.set_preferred_gambit(req.preferred_gambit)
 
     if req.custom_weights:
         try:
-            bot.update_weights(EvalWeights.from_dict(req.custom_weights))
+            bot = ChessBot(req.personality, custom_weights=EvalWeights.from_dict(req.custom_weights))
         except Exception:
             pass
 
-    best_move, stats = bot.choose_move(board, depth=min(6, max(1, req.depth)), max_time=1.2)
+    if req.preferred_gambit:
+        bot.set_preferred_gambit(req.preferred_gambit)
+    else:
+        default_gambits = bot.personality.get("preferred_gambits") or []
+        bot.set_preferred_gambit(default_gambits[0] if default_gambits else None)
+
+    best_move, stats = bot.choose_move(
+        board,
+        depth=min(6, max(1, req.depth)),
+        max_time=1.2,
+        move_history=req.moves
+    )
 
     if not best_move or best_move not in board.legal_moves:
         # Fallback to any legal move
@@ -164,7 +205,13 @@ def evaluate_position(req: EvalRequest):
         raise HTTPException(status_code=400, detail=f"Invalid FEN: {e}")
 
     bot = get_or_create_bot(req.personality)
-    score_cp = bot.evaluator.evaluate(board)
+    evaluator = bot.evaluator
+    if req.custom_weights:
+        try:
+            evaluator = Evaluator(EvalWeights.from_dict(req.custom_weights))
+        except Exception:
+            pass
+    score_cp = evaluator.evaluate(board)
 
     # Material count
     white_mat = sum(len(board.pieces(pt, chess.WHITE)) * val for pt, val in [
@@ -222,7 +269,10 @@ async def review_game(req: ReviewRequest):
 
     # Validate moves list upfront – catch bad UCI before dispatching to thread
     import chess as _chess
-    board_check = _chess.Board()
+    try:
+        board_check = _chess.Board(req.initial_fen) if req.initial_fen else _chess.Board()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid initial FEN: {e}")
     for m in req.moves:
         try:
             mo = _chess.Move.from_uci(m)
@@ -250,7 +300,91 @@ async def review_game(req: ReviewRequest):
     return report
 
 
-# ==================== WEBSOCKET TRAINING LAB ====================
+# ==================== HTTP & WEBSOCKET TRAINING LAB ====================
+
+@app.post("/api/train/start")
+def start_http_training(req: TrainStartRequest):
+    """Starts evolutionary self-play training in a background thread (HTTP fallback)."""
+    global _active_http_trainer
+    generations = min(10, max(1, req.generations))
+    depth = min(3, max(1, req.depth))
+    base_personality = req.personality if req.personality in BOT_PERSONALITIES else "tal"
+    base_weights = BOT_PERSONALITIES[base_personality]["weights"]
+
+    with _training_lock:
+        if _training_state["is_training"]:
+            return {"status": "already_running", **_training_state}
+
+        trainer = BotTrainer(output_path=TRAINED_WEIGHTS_PATH)
+        _active_http_trainer = trainer
+        _training_state.update({
+            "is_training": True,
+            "state": "running",
+            "message": "AI Training Lab started! Optimizing gambit evaluation weights...",
+            "progress": None,
+            "weights": None,
+            "error": None,
+        })
+
+    def _run_training():
+        global _active_http_trainer
+        try:
+            def _on_progress(stats: Dict[str, Any]):
+                with _training_lock:
+                    _training_state["progress"] = stats
+                    _training_state["message"] = (
+                        f"Generation {stats['generation']}/{stats['total_generations']} "
+                        f"(Best Score: {stats['best_score']})"
+                    )
+
+            best_weights = trainer.train_evolutionary(
+                generations=generations,
+                search_depth=depth,
+                initial_weights=base_weights,
+                progress_callback=_on_progress,
+            )
+
+            if "trained" in bot_instances:
+                bot_instances["trained"].update_weights(best_weights)
+
+            with _training_lock:
+                was_stopped = _training_state["state"] == "stopped"
+                _training_state["is_training"] = False
+                _training_state["weights"] = best_weights.to_dict()
+                if not was_stopped:
+                    _training_state["state"] = "finished"
+                    _training_state["message"] = "Training finished successfully!"
+                _active_http_trainer = None
+        except Exception as exc:
+            with _training_lock:
+                _training_state["is_training"] = False
+                _training_state["state"] = "error"
+                _training_state["error"] = str(exc)
+                _training_state["message"] = f"Training error: {exc}"
+                _active_http_trainer = None
+
+    threading.Thread(target=_run_training, daemon=True).start()
+    return {"status": "started", **_training_state}
+
+
+@app.get("/api/train/status")
+def get_http_training_status():
+    """Returns current status of background training job."""
+    with _training_lock:
+        return dict(_training_state)
+
+
+@app.post("/api/train/stop")
+def stop_http_training():
+    """Stops active background training job."""
+    with _training_lock:
+        if _active_http_trainer is not None:
+            _active_http_trainer.stop_training()
+        _training_state["is_training"] = False
+        _training_state["state"] = "stopped"
+        _training_state["message"] = "Training stopped by user."
+        return dict(_training_state)
+
 
 @app.websocket("/ws/train")
 async def websocket_training(websocket: WebSocket):

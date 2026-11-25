@@ -24,6 +24,11 @@ PIECE_VALS = {
 }
 
 
+class SearchTimeout(Exception):
+    """Raised when search exceeds its allocated time limit."""
+    pass
+
+
 class SearchEngine:
     def __init__(self, evaluator: Evaluator):
         self.evaluator = evaluator
@@ -33,13 +38,20 @@ class SearchEngine:
         self.nodes_searched = 0
         self.start_time = 0.0
         self.time_limit = 1.0  # seconds
+        self.allow_abort = False
 
     def clear(self):
         self.tt.clear()
         self.killer_moves = [[None, None] for _ in range(64)]
         self.history_scores.clear()
 
-    def order_moves(self, board: chess.Board, ply: int, hash_move: Optional[chess.Move] = None) -> List[chess.Move]:
+    def order_moves(
+        self,
+        board: chess.Board,
+        ply: int,
+        hash_move: Optional[chess.Move] = None,
+        captures_only: bool = False
+    ) -> List[chess.Move]:
         """
         Orders legal moves for optimal alpha-beta pruning efficiency:
         1. Hash move from Transposition Table
@@ -47,7 +59,10 @@ class SearchEngine:
         3. Killer moves (moves that produced cutoffs at this depth)
         4. History heuristic scores
         """
-        moves = list(board.legal_moves)
+        moves = [
+            m for m in board.legal_moves
+            if not captures_only or board.is_capture(m) or m.promotion
+        ]
         scores = []
 
         for move in moves:
@@ -75,15 +90,16 @@ class SearchEngine:
                 score += 80000
 
             # 3. Killer moves
-            if ply < 64:
+            if not captures_only and ply < 64:
                 if move == self.killer_moves[ply][0]:
                     score += 9000
                 elif move == self.killer_moves[ply][1]:
                     score += 8000
 
             # 4. History heuristic
-            move_key = (move.from_square, move.to_square)
-            score += self.history_scores.get(move_key, 0)
+            if not captures_only:
+                move_key = (move.from_square, move.to_square)
+                score += self.history_scores.get(move_key, 0)
 
             scores.append((score, move))
 
@@ -95,6 +111,10 @@ class SearchEngine:
         Searches captures only to avoid the 'horizon effect' on tactical positions.
         """
         self.nodes_searched += 1
+
+        if self.allow_abort and (self.nodes_searched & 255) == 0:
+            if (time.time() - self.start_time) > self.time_limit:
+                raise SearchTimeout()
 
         # Stand-pat score
         stand_pat = self.evaluator.evaluate(board)
@@ -109,11 +129,7 @@ class SearchEngine:
         if qply >= 6:  # limit quiescence depth
             return stand_pat
 
-        # Generate loud moves (captures and promotions only)
-        capture_moves = [m for m in board.legal_moves if board.is_capture(m) or m.promotion]
-        # Order captures with MVV-LVA
-        ordered_captures = self.order_moves(board, qply)
-        ordered_captures = [m for m in ordered_captures if board.is_capture(m) or m.promotion]
+        ordered_captures = self.order_moves(board, qply, captures_only=True)
 
         for move in ordered_captures:
             board.push(move)
@@ -134,8 +150,15 @@ class SearchEngine:
         self.nodes_searched += 1
 
         # Check time limit periodically
-        if self.nodes_searched % 256 == 0 and (time.time() - self.start_time) > self.time_limit:
-            return self.evaluator.evaluate(board) * (1 if board.turn == chess.WHITE else -1)
+        if self.allow_abort and (self.nodes_searched & 255) == 0:
+            if (time.time() - self.start_time) > self.time_limit:
+                raise SearchTimeout()
+
+        # Game over conditions (checked before leaf horizon so mates at depth 0 aren't missed)
+        if board.is_checkmate():
+            return -20000 + ply
+        if board.is_stalemate() or board.is_insufficient_material() or board.can_claim_draw():
+            return 0
 
         # Transposition table lookup
         board_hash = chess.polyglot.zobrist_hash(board)
@@ -156,12 +179,6 @@ class SearchEngine:
         # Leaf node check
         if depth <= 0:
             return self.quiescence_search(board, alpha, beta, 0)
-
-        # Game over conditions
-        if board.is_checkmate():
-            return -20000 + ply
-        if board.is_stalemate() or board.is_insufficient_material() or board.can_claim_draw():
-            return 0
 
         best_score = -999999
         best_move = None
@@ -193,6 +210,8 @@ class SearchEngine:
                 break
 
         # Store in Transposition Table
+        if len(self.tt) > 200000:
+            self.tt.clear()
         if best_score <= orig_alpha:
             flag = UPPERBOUND
         elif best_score >= beta:
@@ -221,12 +240,14 @@ class SearchEngine:
 
         best_move = legal_moves[0]
         best_score = 0
+        completed_depth = 0
 
         # Iterative Deepening
         for current_depth in range(1, depth + 1):
             if time.time() - self.start_time >= self.time_limit and current_depth > 1:
                 break
 
+            self.allow_abort = (current_depth > 1)
             current_best_score = -999999
             current_best_move = None
             alpha = -999999
@@ -236,29 +257,36 @@ class SearchEngine:
             hash_move = self.tt.get(board_hash, (0, 0, 0, None))[3]
             ordered_moves = self.order_moves(board, 0, hash_move)
 
-            for move in ordered_moves:
-                board.push(move)
-                score = -self.alpha_beta(board, current_depth - 1, -beta, -alpha, 1)
-                board.pop()
+            try:
+                for move in ordered_moves:
+                    board.push(move)
+                    try:
+                        score = -self.alpha_beta(board, current_depth - 1, -beta, -alpha, 1)
+                    finally:
+                        board.pop()
 
-                if score > current_best_score:
-                    current_best_score = score
-                    current_best_move = move
+                    if score > current_best_score:
+                        current_best_score = score
+                        current_best_move = move
 
-                if score > alpha:
-                    alpha = score
+                    if score > alpha:
+                        alpha = score
 
-                if time.time() - self.start_time >= self.time_limit and current_depth > 1:
-                    break
+                    if self.allow_abort and (time.time() - self.start_time) >= self.time_limit:
+                        raise SearchTimeout()
 
-            if current_best_move:
-                best_move = current_best_move
-                best_score = current_best_score
+                if current_best_move:
+                    best_move = current_best_move
+                    best_score = current_best_score
+                    completed_depth = current_depth
+            except SearchTimeout:
+                # Discard partial depth iteration and retain last fully searched best_move
+                break
 
         elapsed = time.time() - self.start_time
         stats = {
             "nodes": self.nodes_searched,
-            "depth": depth,
+            "depth": completed_depth or 1,
             "time": round(elapsed, 3),
             "nps": int(self.nodes_searched / max(0.001, elapsed)),
             "score_cp": best_score if board.turn == chess.WHITE else -best_score

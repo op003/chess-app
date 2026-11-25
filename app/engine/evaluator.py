@@ -6,6 +6,7 @@ center dominance, and king attack pressure over pure material count.
 from dataclasses import dataclass, asdict
 from typing import Dict, Any, List
 import json
+import os
 import chess
 
 # Standard Piece-Square Tables (Midgame) from White's perspective
@@ -106,6 +107,9 @@ class EvalWeights:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
     def save(self, filepath: str) -> None:
+        parent = os.path.dirname(os.path.abspath(filepath))
+        if parent:
+            os.makedirs(parent, exist_ok=True)
         with open(filepath, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
@@ -164,7 +168,7 @@ class Evaluator:
         for piece_type, base_val in piece_values.items():
             for sq in board.pieces(piece_type, chess.WHITE):
                 white_material += base_val
-                sq_idx = chess.square_mirror(sq) if False else (63 - sq)
+                sq_idx = 63 - sq  # Mirror: a1=63 (back rank, low bonus), a8=7 (promo rank, high bonus)
                 score += base_val + (tables[piece_type][sq_idx] * w.pst_weight)
 
             for sq in board.pieces(piece_type, chess.BLACK):

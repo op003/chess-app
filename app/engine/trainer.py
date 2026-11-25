@@ -60,8 +60,11 @@ class BotTrainer:
         for field in fields:
             if random.random() < 0.6:
                 val = getattr(child, field)
-                delta = (random.random() * 2 - 1) * mutation_rate * val
-                new_val = max(1.0, val + delta)
+                delta = (random.random() * 2 - 1) * mutation_rate * abs(val)
+                if field == "pawn_structure_weight":
+                    new_val = min(-1.0, val + delta)
+                else:
+                    new_val = max(1.0, val + delta)
                 setattr(child, field, round(new_val, 2))
 
         child.name = f"Gen-{self.current_generation} Mutated"

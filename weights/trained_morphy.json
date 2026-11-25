@@ -1,0 +1,19 @@
+{
+  "name": "Trained Paul Morphy (The Romantic) (Gen 6)",
+  "pawn_val": 111.1,
+  "knight_val": 320.0,
+  "bishop_val": 300.0,
+  "rook_val": 510.0,
+  "queen_val": 900.0,
+  "pst_weight": 1.0,
+  "mobility_weight": 11.94,
+  "center_control_weight": 21.57,
+  "king_attack_weight": 24.41,
+  "king_safety_weight": 16.01,
+  "development_weight": 27.73,
+  "open_file_weight": 30.2,
+  "bishop_pair_weight": 41.04,
+  "passed_pawn_weight": 25.0,
+  "pawn_structure_weight": -15.92,
+  "gambit_aggression": 2.17
+}

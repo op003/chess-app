@@ -16,6 +16,7 @@ Includes complete opening theory, strategic ideas, key tactical targets, and fam
   * **Scotch Gambit** (`1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Bc4`) - Rapid development against e5.
   * **Blackmar-Diemer Gambit** (`1. d4 d5 2. e4 dxe4 3. Nc3 Nf6 4. f3`) - Aggressive 1.d4 bloodbath.
   * **Halloween Gambit** (`1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Nxe5!?`) - Shock value minor piece sacrifice.
+  * **Alien Gambit** (`1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nf6 5. Ng5 h6 6. Nxf7!!`) - Witty_Alien's brilliant knight sacrifice.
 * **Top Black Counter-Gambits**:
   * **Stafford Gambit** (`1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6`) - Eric Rosen's viral trap ambush.
   * **Budapest Gambit** (`1. d4 Nf6 2. c4 e5 3. dxe5 Ng4`) - Sharp counterpunch against 1.d4.
@@ -32,15 +33,59 @@ Unlike conventional engines that shy away from gambits due to strict pawn counti
 * **Paul Morphy (The Romantic)**: Prioritizes rapid development, piece harmony, and central tempos.
 * **Garry Kasparov (The Boss)**: Dynamic calculation with suffocating central pressure.
 * **The Trap Master**: Plays for venomous tactical tricks and counter-gambits (Stafford specialist).
+* **Alien Gambit (The Invader)** 👽: Obsessed with *brilliant* sacrifices — hunts the naked enemy king with engine-approved Nxf7!! style blows.
 * **Custom Trained AI Bot**: Plays using your self-trained neural/heuristic weights!
+
+The lineup can be pruned to the strongest styles using the built-in arena tournament (see below).
 
 ---
 
 ### 3. 🧬 AI Bot Training Lab (Self-Play Reinforcement Learning)
-* **Evolutionary Self-Play Tournament**: Pits mutated candidate evaluators across top gambit positions (King's Gambit, Evans, Danish, Stafford, etc.).
-* **Tunable Parameters**: Automatically optimizes piece mobility, king attack pressure, center control, open files, and sacrifice valuation.
+* **Evolutionary Self-Play Tournament**: Pits mutated candidate evaluators across top gambit positions (King's Gambit, Evans, Danish, Stafford, Alien, etc.).
+* **Tunable Parameters**: Automatically optimizes piece mobility, king attack pressure, king safety (pawn shield), center control, open files, and sacrifice valuation.
 * **Interactive Real-Time Dashboard**: Watch training progress, generations, win rates, and live weights via WebSockets!
 * **CLI Training**: Run `python3 train.py --generations 5 --depth 2` directly from your terminal.
+* **Per-Personality Training**: `python3 train.py --personality tal` tunes a specific style and saves to `weights/trained_<id>.json` (auto-loaded by the server).
+
+---
+
+### 3c. 🏆 Arena Results & Selection (Nov 2026)
+
+A 279-game double round-robin (8 gambit openings × both colors, depth 3, neutral adjudication) ranked every style:
+
+| Rank | Style | Elo | Win% | Trained? | Verification gate vs preset |
+|---|---|---|---|---|---|
+| 🥇 | 🤖 Custom Trained AI Bot | 1623 | 73.5% | ✅ | 50.0% — adopted |
+| 🥈 | 👑 Garry Kasparov (The Boss) | 1514 | 51.1% | ✅ | 68.8% — adopted |
+| 🥉 | ⚔️ Paul Morphy (The Romantic) | 1502 | 55.4% | ✅ | 43.8% — adopted |
+| 4 | 🎯 The Trap Master | 1494 | 47.2% | ✅ | 25.0% — **rejected**, preset kept |
+| 5 | 🧙‍♂️ Mikhail Tal (The Magician) | 1482 | 41.9% | ✅ | 75.0% — adopted |
+| 6 | 👽 Alien Gambit (The Invader) | 1385 | 32.2% | — (kept for brilliant-sacrifice flavor) | |
+
+Full game log: `tournament/games.jsonl`, live standings: `tournament/standings.json`.
+The five winning styles were then evolution-trained (`train_selected.py`) and each new
+weight set had to **beat its own preset in a verification match** before being adopted —
+Trained, Kasparov, Morphy and Tal passed; Trap Master's mutant regressed and was
+automatically rejected. Final-lineup validation runs in `tournament_final/`.
+
+**Final validation (283 games with the trained lineup):** the trained styles climbed —
+Morphy 55% → **62%**, Tal 42% → **47%** (5th → 3rd place), Custom Trained held the crown
+at 67% — while the strongest styles also show higher draw rates, i.e. more careful,
+harder-to-beat play. The final game roster is the five winners **plus** the new
+Alien Gambit style.
+
+---
+
+### 3b. ⚔️ Arena Tournament (`arena.py`)
+Rank every playing style against every other style in a long-running double round-robin:
+```bash
+python3 arena.py --hours 24 --depth 3          # full 24-hour arena (checkpointed after every game)
+python3 arena.py --resume --hours 24           # continue a previous run with ratings intact
+```
+* **Elo + W-D-L standings** recalculated after each game in `tournament/standings.json`.
+* Every game recorded in `tournament/games.jsonl`; 8 signature gambit openings rotate per cycle, colors balanced.
+* Ply-capped games are adjudicated by a **neutral** evaluator (no style bias).
+
 
 ---
 
@@ -92,5 +137,7 @@ Then open your browser at **`http://127.0.0.1:8000`**.
 
 ```bash
 python3 train.py --generations 5 --depth 2 --output weights/trained_bot.json
+# Or tune one specific style (e.g. the tournament's top-5):
+python3 train.py --personality tal --generations 6 --depth 2
 ```
-The trained weights are automatically saved to `weights/trained_bot.json` and can be loaded directly in the game by selecting **"Custom Trained AI Bot"**!
+The trained weights are automatically saved to `weights/trained_bot.json` (or `weights/trained_<id>.json` for a specific personality) and loaded by the server on the next bot move!

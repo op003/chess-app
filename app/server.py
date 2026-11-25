@@ -21,27 +21,39 @@ from app.engine.reviewer import GameReviewer
 app = FastAPI(title="Gambit Master Chess & AI Training Lab")
 
 TRAINED_WEIGHTS_PATH = os.path.join(os.path.dirname(__file__), "..", "weights", "trained_bot.json")
+WEIGHTS_DIR = os.path.join(os.path.dirname(__file__), "..", "weights")
 
 # In-memory bot instances per personality
 bot_instances: Dict[str, ChessBot] = {}
 
-def _load_trained_weights() -> Optional[EvalWeights]:
-    if os.path.exists(TRAINED_WEIGHTS_PATH):
-        try:
-            return EvalWeights.load(TRAINED_WEIGHTS_PATH)
-        except Exception:
-            pass
+def _personality_weights_path(personality_id: str) -> str:
+    return os.path.join(WEIGHTS_DIR, f"trained_{personality_id}.json")
+
+
+def _load_personality_weights(personality_id: str) -> Optional[EvalWeights]:
+    """Loads evolution-trained weights for a personality if they exist on disk."""
+    paths = [_personality_weights_path(personality_id)]
+    if personality_id == "trained":
+        paths.append(TRAINED_WEIGHTS_PATH)
+    for path in paths:
+        if os.path.exists(path):
+            try:
+                return EvalWeights.load(path)
+            except Exception:
+                pass
     return None
 
 
+def _load_trained_weights() -> Optional[EvalWeights]:
+    return _load_personality_weights("trained")
+
+
 def get_or_create_bot(personality_id: str = "tal") -> ChessBot:
+    disk_weights = _load_personality_weights(personality_id)
     if personality_id not in bot_instances:
-        custom_weights = _load_trained_weights() if personality_id == "trained" else None
-        bot_instances[personality_id] = ChessBot(personality_id, custom_weights=custom_weights)
-    elif personality_id == "trained":
-        disk_weights = _load_trained_weights()
-        if disk_weights is not None:
-            bot_instances["trained"].update_weights(disk_weights)
+        bot_instances[personality_id] = ChessBot(personality_id, custom_weights=disk_weights)
+    elif disk_weights is not None:
+        bot_instances[personality_id].update_weights(disk_weights)
     return bot_instances[personality_id]
 
 
@@ -109,9 +121,9 @@ def get_single_gambit(gambit_id: str):
 def get_personalities():
     """Returns list of bot personalities with their descriptions and traits."""
     result = []
-    trained_weights = _load_trained_weights()
     for pid, p in BOT_PERSONALITIES.items():
-        weights = trained_weights if (pid == "trained" and trained_weights is not None) else p["weights"]
+        trained_weights = _load_personality_weights(pid)
+        weights = trained_weights if trained_weights is not None else p["weights"]
         result.append({
             "id": p["id"],
             "name": p["name"],
@@ -119,6 +131,7 @@ def get_personalities():
             "description": p["description"],
             "preferred_gambits": p["preferred_gambits"],
             "default_depth": p["default_depth"],
+            "has_trained_weights": trained_weights is not None,
             "weights": weights.to_dict()
         })
     return {"personalities": result}
@@ -154,7 +167,7 @@ def request_bot_move(req: MoveRequest):
     best_move, stats = bot.choose_move(
         board,
         depth=min(6, max(1, req.depth)),
-        max_time=1.2,
+        max_time=1.5,
         move_history=req.moves
     )
 

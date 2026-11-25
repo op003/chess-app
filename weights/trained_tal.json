@@ -1,0 +1,19 @@
+{
+  "name": "Trained Mikhail Tal (The Magician) (Gen 6)",
+  "pawn_val": 78.5,
+  "knight_val": 280.0,
+  "bishop_val": 322.59,
+  "rook_val": 490.0,
+  "queen_val": 920.0,
+  "pst_weight": 1.0,
+  "mobility_weight": 10.05,
+  "center_control_weight": 14.65,
+  "king_attack_weight": 35.21,
+  "king_safety_weight": 14.5,
+  "development_weight": 16.11,
+  "open_file_weight": 21.17,
+  "bishop_pair_weight": 51.06,
+  "passed_pawn_weight": 19.93,
+  "pawn_structure_weight": -16.88,
+  "gambit_aggression": 2.55
+}

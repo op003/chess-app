@@ -2359,7 +2359,7 @@ class ChessBoard {
         return legalMoves;
     }
 
-    makeMove(fromIdx, toIdx, promotionChoice = 'q') {
+    makeMove(fromIdx, toIdx, promotionChoice = 'q', fromPromotionDialog = false) {
         const piece = this.squares[fromIdx];
         if (!piece) return false;
 
@@ -2367,8 +2367,12 @@ class ChessBoard {
         const move = legal.find(m => m.to === toIdx);
         if (!move) return false;
 
-        // Check if promotion is required
-        if (move.promo && !move.promotionApplied) {
+        // Safety fallback: never proceed with a missing promotion piece
+        if (move.promo && !promotionChoice) promotionChoice = 'q';
+
+        // Check if promotion is required (only intercept on first call; when
+        // replaying with the piece chosen in the dialog we must NOT intercept again)
+        if (move.promo && !fromPromotionDialog) {
             this.pendingPromotion = { from: fromIdx, to: toIdx };
             this.showPromotionDialog(this.turn === 'w');
             return true;
@@ -2561,7 +2565,9 @@ class ChessBoard {
                 if (this.pendingPromotion) {
                     const { from, to } = this.pendingPromotion;
                     this.pendingPromotion = null;
-                    this.makeMove(from, to, choice);
+                    // Pass fromPromotionDialog=true so makeMove replays the move
+                    // with the chosen piece instead of re-opening the dialog.
+                    this.makeMove(from, to, choice, true);
                 }
             };
         });
@@ -2777,6 +2783,16 @@ class GambitChessApp {
                 </option>
             `).join('');
 
+            // Keep the Training Lab "Base Personality" dropdown in sync with the server lineup
+            const baseSelect = document.getElementById('train-base-personality');
+            if (baseSelect) {
+                const prev = baseSelect.value;
+                baseSelect.innerHTML = data.personalities.map(p =>
+                    `<option value="${p.id}">${p.avatar} ${p.name}</option>`
+                ).join('');
+                if (prev && data.personalities.some(p => p.id === prev)) baseSelect.value = prev;
+            }
+
             this.updatePersonalityCard(data.personalities.find(p => p.id === this.currentPersonality));
         } catch (e) {
             console.error('Failed to load personalities:', e);
@@ -2800,7 +2816,8 @@ class GambitChessApp {
         if (!p) return;
         document.getElementById('bot-avatar').textContent = p.avatar;
         document.getElementById('bot-name').textContent = p.name;
-        document.getElementById('bot-desc').textContent = p.description;
+        document.getElementById('bot-desc').textContent =
+            p.description + (p.has_trained_weights ? ' 🧬 Arena-trained weights loaded.' : '');
 
         this.setBotSpeech(`${p.name.split(' ')[0]}: "Let's play! Prepare for sharp tactics and bold sacrifices."`);
     }

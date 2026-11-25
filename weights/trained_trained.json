@@ -1,0 +1,19 @@
+{
+  "name": "Trained Custom Trained AI Bot (Gen 6)",
+  "pawn_val": 99.98,
+  "knight_val": 317.31,
+  "bishop_val": 339.35,
+  "rook_val": 500.0,
+  "queen_val": 900.0,
+  "pst_weight": 1.0,
+  "mobility_weight": 8.36,
+  "center_control_weight": 10.09,
+  "king_attack_weight": 28.51,
+  "king_safety_weight": 18.84,
+  "development_weight": 16.15,
+  "open_file_weight": 16.07,
+  "bishop_pair_weight": 26.97,
+  "passed_pawn_weight": 26.78,
+  "pawn_structure_weight": -12.91,
+  "gambit_aggression": 1.73
+}

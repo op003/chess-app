@@ -125,7 +125,7 @@ python3 arena.py --resume --hours 24           # continue a previous run with ra
 > game review and offline training. Bot moves fall back to the JS engine automatically whenever the
 > Python API is unreachable. For the full-strength Python search, WebSocket training dashboard and
 > arena-trained weights, host the FastAPI server instead (Railway / Render / Fly.io / any VPS):
-> `python main.py` (or `bash run.sh`).
+> `python main.py` (or `bash run.sh`). Live preview in Arena: the sandbox serves the same site on port 8000.
 
 ### Option 1: Quick Launch
 ```bash

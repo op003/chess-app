@@ -192,6 +192,19 @@ const FALLBACK_GAMBITS = [
             { name: "Lasker Trap Line", moves: ["d2d4", "d7d5", "c2c4", "e7e5", "d4e5", "d5d4", "e2e3", "f8b4", "c1d2", "d4e3", "d2b4", "e3f2", "e1e2", "f2g1n"], note: "Promotes to Knight with check winning White's Queen!" }
         ],
         trap_example: "Underpromoting to a Knight on move 7 with check (fxg1=N+!!)."
+    },
+    {
+        id: "alien_gambit", name: "Alien Gambit", color: "white", eco: "B12",
+        subtitle: "The Witty Alien Knight Sacrifice",
+        moves: ["e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4", "g8f6", "e4g5", "h7h6", "g5f7", "e8f7", "g1f3"],
+        san_moves: ["1. e4", "c6", "2. d4", "d5", "3. Nc3", "dxe4", "4. Nxe4", "Nf6", "5. Ng5", "h6", "6. Nxf7!", "Kxf7", "7. Nf3"],
+        description: "Invented by CM Volen Dyulgerov ('Witty_Alien') in the Caro-Kann. White plays the brilliant Nxf7!! sacrifice, dragging Black's king into the open for a devastating attack.",
+        key_ideas: ["Refuse to retreat the g5-knight — sacrifice it on f7", "Drag Black's king to f7 where it is exposed", "Rapid development before Black can regroup"],
+        variations: [
+            { name: "Main Line - King Hunt", moves: ["e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4", "g8f6", "e4g5", "h7h6", "g5f7", "e8f7", "g1f3", "b8c6", "f1c4", "f8d6", "d1d8"], note: "Queen infiltration with Bc4+ pressure against the exposed king." },
+            { name: "Martian Gambit (vs 4...Bf5)", moves: ["e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4", "c8f5", "e4g3", "f5g6", "h2h4"], note: "Sibling sacrifice system when Black develops the bishop early." }
+        ],
+        trap_example: "6.Nxf7!! Kxf7 7.Nf3! and 8.Bc4+ lands with unstoppable king-hunt threats."
     }
 ];
 
@@ -199,6 +212,7 @@ const DEFAULT_WEIGHTS = {
     name: "Trained Bot",
     pawn_val: 100.0, knight_val: 315.0, bishop_val: 330.0, rook_val: 500.0, queen_val: 900.0,
     pst_weight: 1.0, mobility_weight: 8.0, center_control_weight: 15.0, king_attack_weight: 24.0,
+    king_safety_weight: 18.0,
     development_weight: 18.0, open_file_weight: 16.0, bishop_pair_weight: 40.0,
     passed_pawn_weight: 25.0, pawn_structure_weight: -12.0, gambit_aggression: 1.8
 };
@@ -231,6 +245,13 @@ const FALLBACK_PERSONALITIES = [
         preferred_gambits: ["stafford_gambit", "englund_gambit", "budapest_gambit", "albin_countergambit"],
         default_depth: 4,
         weights: { ...DEFAULT_WEIGHTS, name: "Trap Master", pawn_val: 85, knight_val: 330, bishop_val: 340, rook_val: 495, queen_val: 930, mobility_weight: 15, center_control_weight: 16, king_attack_weight: 35, development_weight: 24, open_file_weight: 18, bishop_pair_weight: 45, gambit_aggression: 2.2 }
+    },
+    {
+        id: "alien_gambit", name: "Alien Gambit (The Invader)", avatar: "👽",
+        description: "Obsessed with brilliant knight sacrifices like the Alien Gambit Nxf7!! — hunts the enemy king with stunning, engine-approved sacrifices.",
+        preferred_gambits: ["alien_gambit", "halloween_gambit", "danish_gambit"],
+        default_depth: 4,
+        weights: { ...DEFAULT_WEIGHTS, name: "Alien Gambit", pawn_val: 78, knight_val: 330, bishop_val: 340, rook_val: 480, queen_val: 940, mobility_weight: 16, center_control_weight: 18, king_attack_weight: 44, king_safety_weight: 5, development_weight: 26, open_file_weight: 20, bishop_pair_weight: 40, gambit_aggression: 3.0 }
     },
     {
         id: "trained", name: "Custom Trained AI Bot", avatar: "🤖",

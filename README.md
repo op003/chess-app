@@ -119,6 +119,14 @@ python3 arena.py --resume --hours 24           # continue a previous run with ra
 
 ## 🚀 How to Run
 
+> **Deploying to static hosts (Vercel / Netlify / GitHub Pages)?** The Python engine cannot run there.
+> Upload **`app/static/index.html` alone** — it is fully self-contained: it embeds a complete JavaScript
+> chess engine (`offline_engine.js`) with the same personalities (incl. 👽 Alien Gambit), gambit book,
+> game review and offline training. Bot moves fall back to the JS engine automatically whenever the
+> Python API is unreachable. For the full-strength Python search, WebSocket training dashboard and
+> arena-trained weights, host the FastAPI server instead (Railway / Render / Fly.io / any VPS):
+> `python main.py` (or `bash run.sh`).
+
 ### Option 1: Quick Launch
 ```bash
 chmod +x run.sh

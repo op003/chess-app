@@ -161,20 +161,22 @@ class BotTrainer:
         positions_per_gen: int = 4,
         max_plies: int = 60,
         population_size: int = 3,
-        champion_label: str = "Trained Bot"
+        champion_label: str = "Trained Bot",
+        start_generation: int = 0
     ) -> EvalWeights:
         """
         Executes evolutionary self-play reinforcement learning to optimize weights.
         Opening positions rotate through ALL gambit training positions across
         generations so candidates are tested on varied gambit structures.
+        `start_generation` continues an existing lineage's generation numbering.
         """
         self.is_training = True
-        self.total_generations = generations
+        self.total_generations = start_generation + generations
 
         champion_weights = copy.deepcopy(initial_weights or EvalWeights(name="Champion"))
         positions_per_gen = max(1, min(positions_per_gen, len(GAMBIT_TRAINING_POSITIONS)))
 
-        for gen in range(1, generations + 1):
+        for gen in range(start_generation + 1, start_generation + generations + 1):
             if not self.is_training:
                 break
 

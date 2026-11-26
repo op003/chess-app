@@ -1,19 +1,20 @@
 {
-  "finished": "2026-11-25 16:47:33",
-  "total_seconds": 5809.6,
+  "finished": "2026-11-26 08:33:24",
+  "total_seconds": 19057.5,
   "results": [
     {
       "personality": "trained",
       "output": "weights/trained_trained.json",
       "train_ok": true,
-      "train_seconds": 1833.6,
-      "stdout_tail": " Weight:  17.52\n  Center Control:      12.04\n  Gambit Aggression:   1.8\n  Pawn Value:          77.81\n  Elapsed:             330.13s\n\n[Generation 3/6]\n  Games Played:        36\n  Best Score:          14.0\n  Mobility Weight:     8.54\n  King Attack Weight:  23.41\n  King Safety Weight:  17.52\n  Center Control:      11.29\n  Gambit Aggression:   1.47\n  Pawn Value:          84.1\n  Elapsed:             315.02s\n\n[Generation 4/6]\n  Games Played:        36\n  Best Score:          15.5\n  Mobility Weight:     9.11\n  King Attack Weight:  26.61\n  King Safety Weight:  17.52\n  Center Control:      9.44\n  Gambit Aggression:   1.47\n  Pawn Value:          99.98\n  Elapsed:             294.43s\n\n[Generation 5/6]\n  Games Played:        36\n  Best Score:          15.0\n  Mobility Weight:     9.11\n  King Attack Weight:  26.61\n  King Safety Weight:  17.52\n  Center Control:      9.44\n  Gambit Aggression:   1.47\n  Pawn Value:          99.98\n  Elapsed:             322.43s\n\n[Generation 6/6]\n  Games Played:        36\n  Best Score:          16.5\n  Mobility Weight:     8.36\n  King Attack Weight:  28.51\n  King Safety Weight:  18.84\n  Center Control:      10.09\n  Gambit Aggression:   1.73\n  Pawn Value:          99.98\n  Elapsed:             311.71s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_trained.json\nSummary: Aggression=1.73, KingAttack=28.51, KingSafety=18.84\n============================================================\n",
+      "train_seconds": 5509.0,
+      "stdout_tail": " 18.92\n  Center Control:      13.98\n  Gambit Aggression:   1.38\n  Pawn Value:          107.04\n  Elapsed:             498.1s\n\n[Generation 9/12]\n  Games Played:        60\n  Best Score:          23.0\n  Mobility Weight:     7.8\n  King Attack Weight:  27.49\n  King Safety Weight:  18.92\n  Center Control:      13.98\n  Gambit Aggression:   1.38\n  Pawn Value:          107.04\n  Elapsed:             435.81s\n\n[Generation 10/12]\n  Games Played:        60\n  Best Score:          23.5\n  Mobility Weight:     7.38\n  King Attack Weight:  27.49\n  King Safety Weight:  18.92\n  Center Control:      11.92\n  Gambit Aggression:   1.43\n  Pawn Value:          99.78\n  Elapsed:             466.24s\n\n[Generation 11/12]\n  Games Played:        60\n  Best Score:          24.0\n  Mobility Weight:     8.4\n  King Attack Weight:  25.85\n  King Safety Weight:  18.78\n  Center Control:      11.97\n  Gambit Aggression:   1.38\n  Pawn Value:          83.57\n  Elapsed:             508.26s\n\n[Generation 12/12]\n  Games Played:        60\n  Best Score:          25.0\n  Mobility Weight:     8.4\n  King Attack Weight:  25.85\n  King Safety Weight:  18.78\n  Center Control:      13.15\n  Gambit Aggression:   1.38\n  Pawn Value:          83.57\n  Elapsed:             492.32s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_trained.json\nSummary: Aggression=1.38, KingAttack=25.85, KingSafety=18.78\n============================================================\n",
       "stderr_tail": "",
+      "fresh_start": false,
       "verification": {
         "personality": "trained",
-        "games": 8,
-        "trained_points": 4.0,
-        "trained_win_pct": 50.0,
+        "games": 16,
+        "trained_points": 9.0,
+        "trained_win_pct": 56.2,
         "adopted": true
       }
     },
@@ -21,14 +22,15 @@
       "personality": "morphy",
       "output": "weights/trained_morphy.json",
       "train_ok": true,
-      "train_seconds": 1937.4,
-      "stdout_tail": "ght:  14.96\n  Center Control:      22.0\n  Gambit Aggression:   1.7\n  Pawn Value:          100.18\n  Elapsed:             341.19s\n\n[Generation 3/6]\n  Games Played:        36\n  Best Score:          14.0\n  Mobility Weight:     11.94\n  King Attack Weight:  28.6\n  King Safety Weight:  15.43\n  Center Control:      21.57\n  Gambit Aggression:   1.98\n  Pawn Value:          110.96\n  Elapsed:             328.56s\n\n[Generation 4/6]\n  Games Played:        36\n  Best Score:          14.0\n  Mobility Weight:     11.94\n  King Attack Weight:  24.41\n  King Safety Weight:  16.01\n  Center Control:      21.57\n  Gambit Aggression:   2.17\n  Pawn Value:          111.1\n  Elapsed:             293.9s\n\n[Generation 5/6]\n  Games Played:        36\n  Best Score:          14.0\n  Mobility Weight:     11.94\n  King Attack Weight:  24.41\n  King Safety Weight:  16.01\n  Center Control:      21.57\n  Gambit Aggression:   2.17\n  Pawn Value:          111.1\n  Elapsed:             337.3s\n\n[Generation 6/6]\n  Games Played:        36\n  Best Score:          17.0\n  Mobility Weight:     11.94\n  King Attack Weight:  24.41\n  King Safety Weight:  16.01\n  Center Control:      21.57\n  Gambit Aggression:   2.17\n  Pawn Value:          111.1\n  Elapsed:             315.81s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_morphy.json\nSummary: Aggression=2.17, KingAttack=24.41, KingSafety=16.01\n============================================================\n",
+      "train_seconds": 6287.1,
+      "stdout_tail": "72\n  Center Control:      27.43\n  Gambit Aggression:   1.67\n  Pawn Value:          134.82\n  Elapsed:             552.52s\n\n[Generation 9/12]\n  Games Played:        60\n  Best Score:          24.0\n  Mobility Weight:     7.78\n  King Attack Weight:  19.01\n  King Safety Weight:  14.72\n  Center Control:      27.43\n  Gambit Aggression:   1.67\n  Pawn Value:          134.82\n  Elapsed:             582.11s\n\n[Generation 10/12]\n  Games Played:        60\n  Best Score:          26.5\n  Mobility Weight:     7.78\n  King Attack Weight:  19.01\n  King Safety Weight:  14.72\n  Center Control:      27.43\n  Gambit Aggression:   1.67\n  Pawn Value:          134.82\n  Elapsed:             555.98s\n\n[Generation 11/12]\n  Games Played:        60\n  Best Score:          27.0\n  Mobility Weight:     7.94\n  King Attack Weight:  21.64\n  King Safety Weight:  16.58\n  Center Control:      29.6\n  Gambit Aggression:   1.74\n  Pawn Value:          123.84\n  Elapsed:             539.71s\n\n[Generation 12/12]\n  Games Played:        60\n  Best Score:          21.5\n  Mobility Weight:     9.07\n  King Attack Weight:  21.64\n  King Safety Weight:  19.86\n  Center Control:      32.23\n  Gambit Aggression:   1.62\n  Pawn Value:          135.45\n  Elapsed:             513.4s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_morphy.json\nSummary: Aggression=1.62, KingAttack=21.64, KingSafety=19.86\n============================================================\n",
       "stderr_tail": "",
+      "fresh_start": false,
       "verification": {
         "personality": "morphy",
-        "games": 8,
-        "trained_points": 3.5,
-        "trained_win_pct": 43.8,
+        "games": 16,
+        "trained_points": 8.0,
+        "trained_win_pct": 50.0,
         "adopted": true
       }
     },
@@ -36,14 +38,15 @@
       "personality": "kasparov",
       "output": "weights/trained_kasparov.json",
       "train_ok": true,
-      "train_seconds": 1875.7,
-      "stdout_tail": "y Weight:  23.21\n  Center Control:      28.78\n  Gambit Aggression:   1.7\n  Pawn Value:          101.36\n  Elapsed:             348.13s\n\n[Generation 3/6]\n  Games Played:        36\n  Best Score:          14.0\n  Mobility Weight:     9.26\n  King Attack Weight:  26.0\n  King Safety Weight:  18.66\n  Center Control:      27.19\n  Gambit Aggression:   1.5\n  Pawn Value:          106.09\n  Elapsed:             286.74s\n\n[Generation 4/6]\n  Games Played:        36\n  Best Score:          16.0\n  Mobility Weight:     9.26\n  King Attack Weight:  26.0\n  King Safety Weight:  18.66\n  Center Control:      27.19\n  Gambit Aggression:   1.5\n  Pawn Value:          106.09\n  Elapsed:             333.88s\n\n[Generation 5/6]\n  Games Played:        36\n  Best Score:          13.0\n  Mobility Weight:     9.26\n  King Attack Weight:  26.0\n  King Safety Weight:  18.66\n  Center Control:      27.19\n  Gambit Aggression:   1.5\n  Pawn Value:          106.09\n  Elapsed:             295.36s\n\n[Generation 6/6]\n  Games Played:        36\n  Best Score:          15.0\n  Mobility Weight:     9.26\n  King Attack Weight:  26.0\n  King Safety Weight:  18.66\n  Center Control:      27.19\n  Gambit Aggression:   1.5\n  Pawn Value:          106.09\n  Elapsed:             300.68s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_kasparov.json\nSummary: Aggression=1.5, KingAttack=26.0, KingSafety=18.66\n============================================================\n",
+      "train_seconds": 6181.7,
+      "stdout_tail": "3\n  Center Control:      23.64\n  Gambit Aggression:   2.31\n  Pawn Value:          86.25\n  Elapsed:             517.93s\n\n[Generation 9/12]\n  Games Played:        60\n  Best Score:          26.5\n  Mobility Weight:     10.12\n  King Attack Weight:  21.74\n  King Safety Weight:  20.03\n  Center Control:      25.57\n  Gambit Aggression:   2.31\n  Pawn Value:          95.42\n  Elapsed:             529.9s\n\n[Generation 10/12]\n  Games Played:        60\n  Best Score:          22.5\n  Mobility Weight:     9.51\n  King Attack Weight:  21.74\n  King Safety Weight:  22.77\n  Center Control:      25.57\n  Gambit Aggression:   2.0\n  Pawn Value:          102.44\n  Elapsed:             467.91s\n\n[Generation 11/12]\n  Games Played:        60\n  Best Score:          24.5\n  Mobility Weight:     9.98\n  King Attack Weight:  21.74\n  King Safety Weight:  23.09\n  Center Control:      25.57\n  Gambit Aggression:   2.32\n  Pawn Value:          114.11\n  Elapsed:             495.81s\n\n[Generation 12/12]\n  Games Played:        60\n  Best Score:          21.0\n  Mobility Weight:     9.71\n  King Attack Weight:  20.24\n  King Safety Weight:  20.59\n  Center Control:      25.57\n  Gambit Aggression:   1.93\n  Pawn Value:          114.11\n  Elapsed:             505.51s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_kasparov.json\nSummary: Aggression=1.93, KingAttack=20.24, KingSafety=20.59\n============================================================\n",
       "stderr_tail": "",
+      "fresh_start": false,
       "verification": {
         "personality": "kasparov",
-        "games": 8,
-        "trained_points": 5.5,
-        "trained_win_pct": 68.8,
+        "games": 16,
+        "trained_points": 8.0,
+        "trained_win_pct": 50.0,
         "adopted": true
       }
     },
@@ -51,14 +54,15 @@
       "personality": "rosen_trap",
       "output": "weights/trained_rosen_trap.json",
       "train_ok": true,
-      "train_seconds": 1891.5,
-      "stdout_tail": "eight:  18.27\n  Center Control:      16.0\n  Gambit Aggression:   2.39\n  Pawn Value:          70.53\n  Elapsed:             320.66s\n\n[Generation 3/6]\n  Games Played:        36\n  Best Score:          16.0\n  Mobility Weight:     15.0\n  King Attack Weight:  37.58\n  King Safety Weight:  19.77\n  Center Control:      16.0\n  Gambit Aggression:   2.22\n  Pawn Value:          75.48\n  Elapsed:             283.53s\n\n[Generation 4/6]\n  Games Played:        36\n  Best Score:          14.0\n  Mobility Weight:     15.0\n  King Attack Weight:  37.58\n  King Safety Weight:  19.77\n  Center Control:      16.0\n  Gambit Aggression:   2.22\n  Pawn Value:          75.48\n  Elapsed:             334.35s\n\n[Generation 5/6]\n  Games Played:        36\n  Best Score:          12.5\n  Mobility Weight:     15.0\n  King Attack Weight:  37.58\n  King Safety Weight:  19.77\n  Center Control:      16.0\n  Gambit Aggression:   2.22\n  Pawn Value:          75.48\n  Elapsed:             316.53s\n\n[Generation 6/6]\n  Games Played:        36\n  Best Score:          16.5\n  Mobility Weight:     15.0\n  King Attack Weight:  36.33\n  King Safety Weight:  19.77\n  Center Control:      16.0\n  Gambit Aggression:   2.22\n  Pawn Value:          85.13\n  Elapsed:             298.78s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_rosen_trap.json\nSummary: Aggression=2.22, KingAttack=36.33, KingSafety=19.77\n============================================================\n",
+      "train_seconds": 6157.7,
+      "stdout_tail": "ter Control:      12.4\n  Gambit Aggression:   2.52\n  Pawn Value:          100.81\n  Elapsed:             507.51s\n\n[Generation 9/12]\n  Games Played:        60\n  Best Score:          20.5\n  Mobility Weight:     11.76\n  King Attack Weight:  43.82\n  King Safety Weight:  20.17\n  Center Control:      13.89\n  Gambit Aggression:   2.3\n  Pawn Value:          100.81\n  Elapsed:             504.23s\n\n[Generation 10/12]\n  Games Played:        60\n  Best Score:          25.5\n  Mobility Weight:     11.76\n  King Attack Weight:  43.82\n  King Safety Weight:  20.17\n  Center Control:      13.89\n  Gambit Aggression:   2.41\n  Pawn Value:          115.03\n  Elapsed:             511.84s\n\n[Generation 11/12]\n  Games Played:        60\n  Best Score:          24.5\n  Mobility Weight:     11.76\n  King Attack Weight:  43.82\n  King Safety Weight:  20.17\n  Center Control:      13.89\n  Gambit Aggression:   2.41\n  Pawn Value:          115.03\n  Elapsed:             553.76s\n\n[Generation 12/12]\n  Games Played:        60\n  Best Score:          26.0\n  Mobility Weight:     11.76\n  King Attack Weight:  48.23\n  King Safety Weight:  16.63\n  Center Control:      14.02\n  Gambit Aggression:   2.35\n  Pawn Value:          101.89\n  Elapsed:             465.49s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_rosen_trap.json\nSummary: Aggression=2.35, KingAttack=48.23, KingSafety=16.63\n============================================================\n",
       "stderr_tail": "",
+      "fresh_start": false,
       "verification": {
         "personality": "rosen_trap",
-        "games": 8,
-        "trained_points": 2.0,
-        "trained_win_pct": 25.0,
+        "games": 16,
+        "trained_points": 6.0,
+        "trained_win_pct": 37.5,
         "adopted": false
       }
     },
@@ -66,14 +70,31 @@
       "personality": "tal",
       "output": "weights/trained_tal.json",
       "train_ok": true,
-      "train_seconds": 1913.0,
-      "stdout_tail": "g Safety Weight:  18.0\n  Center Control:      16.96\n  Gambit Aggression:   1.97\n  Pawn Value:          75.1\n  Elapsed:             343.52s\n\n[Generation 3/6]\n  Games Played:        36\n  Best Score:          17.0\n  Mobility Weight:     12.39\n  King Attack Weight:  31.26\n  King Safety Weight:  18.0\n  Center Control:      16.96\n  Gambit Aggression:   1.97\n  Pawn Value:          75.1\n  Elapsed:             321.22s\n\n[Generation 4/6]\n  Games Played:        36\n  Best Score:          15.0\n  Mobility Weight:     10.53\n  King Attack Weight:  31.26\n  King Safety Weight:  18.0\n  Center Control:      16.96\n  Gambit Aggression:   1.97\n  Pawn Value:          75.1\n  Elapsed:             311.43s\n\n[Generation 5/6]\n  Games Played:        36\n  Best Score:          15.0\n  Mobility Weight:     10.53\n  King Attack Weight:  31.26\n  King Safety Weight:  14.5\n  Center Control:      14.42\n  Gambit Aggression:   2.2\n  Pawn Value:          75.1\n  Elapsed:             313.11s\n\n[Generation 6/6]\n  Games Played:        36\n  Best Score:          14.0\n  Mobility Weight:     10.05\n  King Attack Weight:  35.21\n  King Safety Weight:  14.5\n  Center Control:      14.65\n  Gambit Aggression:   2.55\n  Pawn Value:          78.5\n  Elapsed:             301.38s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_tal.json\nSummary: Aggression=2.55, KingAttack=35.21, KingSafety=14.5\n============================================================\n",
+      "train_seconds": 6216.5,
+      "stdout_tail": " 12.76\n  Center Control:      18.84\n  Gambit Aggression:   3.1\n  Pawn Value:          107.03\n  Elapsed:             510.68s\n\n[Generation 9/12]\n  Games Played:        60\n  Best Score:          24.5\n  Mobility Weight:     16.28\n  King Attack Weight:  34.98\n  King Safety Weight:  12.76\n  Center Control:      18.84\n  Gambit Aggression:   3.1\n  Pawn Value:          107.03\n  Elapsed:             522.47s\n\n[Generation 10/12]\n  Games Played:        60\n  Best Score:          22.5\n  Mobility Weight:     16.28\n  King Attack Weight:  34.98\n  King Safety Weight:  12.76\n  Center Control:      18.84\n  Gambit Aggression:   3.1\n  Pawn Value:          107.03\n  Elapsed:             493.35s\n\n[Generation 11/12]\n  Games Played:        60\n  Best Score:          24.5\n  Mobility Weight:     16.28\n  King Attack Weight:  34.98\n  King Safety Weight:  12.76\n  Center Control:      18.84\n  Gambit Aggression:   3.1\n  Pawn Value:          107.03\n  Elapsed:             522.4s\n\n[Generation 12/12]\n  Games Played:        60\n  Best Score:          26.0\n  Mobility Weight:     16.28\n  King Attack Weight:  34.98\n  King Safety Weight:  12.76\n  Center Control:      18.84\n  Gambit Aggression:   3.1\n  Pawn Value:          107.03\n  Elapsed:             523.39s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_tal.json\nSummary: Aggression=3.1, KingAttack=34.98, KingSafety=12.76\n============================================================\n",
       "stderr_tail": "",
+      "fresh_start": false,
       "verification": {
         "personality": "tal",
-        "games": 8,
-        "trained_points": 6.0,
-        "trained_win_pct": 75.0,
+        "games": 16,
+        "trained_points": 10.0,
+        "trained_win_pct": 62.5,
+        "adopted": true
+      }
+    },
+    {
+      "personality": "alien_gambit",
+      "output": "weights/trained_alien_gambit.json",
+      "train_ok": true,
+      "train_seconds": 6229.1,
+      "stdout_tail": ":  4.23\n  Center Control:      17.0\n  Gambit Aggression:   2.38\n  Pawn Value:          73.81\n  Elapsed:             511.92s\n\n[Generation 9/12]\n  Games Played:        60\n  Best Score:          24.0\n  Mobility Weight:     10.07\n  King Attack Weight:  47.71\n  King Safety Weight:  4.28\n  Center Control:      17.0\n  Gambit Aggression:   2.38\n  Pawn Value:          84.16\n  Elapsed:             545.91s\n\n[Generation 10/12]\n  Games Played:        60\n  Best Score:          30.0\n  Mobility Weight:     10.54\n  King Attack Weight:  47.76\n  King Safety Weight:  4.28\n  Center Control:      13.75\n  Gambit Aggression:   2.22\n  Pawn Value:          88.3\n  Elapsed:             499.4s\n\n[Generation 11/12]\n  Games Played:        60\n  Best Score:          26.0\n  Mobility Weight:     10.54\n  King Attack Weight:  47.76\n  King Safety Weight:  4.28\n  Center Control:      13.75\n  Gambit Aggression:   2.22\n  Pawn Value:          88.3\n  Elapsed:             545.3s\n\n[Generation 12/12]\n  Games Played:        60\n  Best Score:          23.0\n  Mobility Weight:     10.54\n  King Attack Weight:  47.76\n  King Safety Weight:  4.28\n  Center Control:      13.75\n  Gambit Aggression:   2.22\n  Pawn Value:          88.3\n  Elapsed:             502.06s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_alien_gambit.json\nSummary: Aggression=2.22, KingAttack=47.76, KingSafety=4.28\n============================================================\n",
+      "stderr_tail": "",
+      "fresh_start": false,
+      "verification": {
+        "personality": "alien_gambit",
+        "games": 16,
+        "trained_points": 11.0,
+        "trained_win_pct": 68.8,
         "adopted": true
       }
     }

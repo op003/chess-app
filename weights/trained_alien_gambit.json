@@ -1,0 +1,19 @@
+{
+  "name": "Trained Alien Gambit (The Invader) (Gen 12)",
+  "pawn_val": 88.3,
+  "knight_val": 289.7,
+  "bishop_val": 315.11,
+  "rook_val": 480.0,
+  "queen_val": 940.0,
+  "pst_weight": 1.0,
+  "mobility_weight": 10.54,
+  "center_control_weight": 13.75,
+  "king_attack_weight": 47.76,
+  "king_safety_weight": 4.28,
+  "development_weight": 18.81,
+  "open_file_weight": 23.51,
+  "bishop_pair_weight": 29.03,
+  "passed_pawn_weight": 24.72,
+  "pawn_structure_weight": -8.13,
+  "gambit_aggression": 2.22
+}

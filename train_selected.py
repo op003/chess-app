@@ -32,7 +32,7 @@ GATE_OPENINGS = [
 ]
 
 
-def train_one(personality_id: str, generations: int, positions: int, games_per_pair: int, depth: int) -> dict:
+def train_one(personality_id: str, generations: int, positions: int, games_per_pair: int, depth: int, fresh: bool = False) -> dict:
     """Runs train.py for one personality in a subprocess. Returns result info."""
     out_path = f"weights/trained_{personality_id}.json"
     backup_path = f"weights/.backup_{personality_id}.json"
@@ -50,6 +50,8 @@ def train_one(personality_id: str, generations: int, positions: int, games_per_p
         "--depth", str(depth),
         "--output", out_path,
     ]
+    if fresh:
+        cmd.append("--fresh")
     started = time.time()
     proc = subprocess.run(cmd, capture_output=True, text=True)
     elapsed = time.time() - started
@@ -62,6 +64,7 @@ def train_one(personality_id: str, generations: int, positions: int, games_per_p
         "train_seconds": round(elapsed, 1),
         "stdout_tail": proc.stdout[-1500:] if proc.stdout else "",
         "stderr_tail": proc.stderr[-800:] if proc.stderr else "",
+        "fresh_start": fresh,
     }
 
 
@@ -129,7 +132,7 @@ def verification_match(personality_id: str, games: int = 12, depth: int = 2, max
 def process_personality(pid: str, args) -> dict:
     print(f"\n🧬 [{pid}] training started (generations={args.generations}, "
           f"positions={args.positions}, games/pair={args.games_per_pair}, depth={args.depth})")
-    result = train_one(pid, args.generations, args.positions, args.games_per_pair, args.depth)
+    result = train_one(pid, args.generations, args.positions, args.games_per_pair, args.depth, fresh=args.fresh)
 
     if not result["train_ok"]:
         # Restore any previous weights so the bot keeps working
@@ -161,13 +164,16 @@ def process_personality(pid: str, args) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Train selected personalities with quality gate")
-    parser.add_argument("--ids", nargs="+", default=["trained", "morphy", "kasparov", "rosen_trap", "tal"])
+    parser.add_argument("--ids", nargs="+",
+                        default=["trained", "morphy", "kasparov", "rosen_trap", "tal", "alien_gambit"])
     parser.add_argument("--generations", type=int, default=6)
     parser.add_argument("--positions", type=int, default=3)
     parser.add_argument("--games-per-pair", type=int, default=2)
     parser.add_argument("--depth", type=int, default=2)
     parser.add_argument("--parallel", type=int, default=2)
-    parser.add_argument("--gate-games", type=int, default=12)
+    parser.add_argument("--gate-games", type=int, default=16)
+    parser.add_argument("--fresh", action="store_true",
+                        help="Ignore existing trained_<id>.json lineages and restart from presets")
     args = parser.parse_args()
 
     print("=" * 70)

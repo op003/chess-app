@@ -23,6 +23,7 @@ import chess
 
 from app.engine.bot import ChessBot, BOT_PERSONALITIES
 from app.engine.evaluator import Evaluator, EvalWeights
+from app.engine.trainer import build_league_panel
 
 GATE_OPENINGS = [
     ["e2e4", "e7e5", "f2f4"],                                  # King's Gambit
@@ -32,7 +33,7 @@ GATE_OPENINGS = [
 ]
 
 
-def train_one(personality_id: str, generations: int, positions: int, games_per_pair: int, depth: int, fresh: bool = False) -> dict:
+def train_one(personality_id: str, generations: int, positions: int, games_per_pair: int, depth: int, fresh: bool = False, population: int = 2) -> dict:
     """Runs train.py for one personality in a subprocess. Returns result info."""
     out_path = f"weights/trained_{personality_id}.json"
     backup_path = f"weights/.backup_{personality_id}.json"
@@ -47,7 +48,9 @@ def train_one(personality_id: str, generations: int, positions: int, games_per_p
         "--personality", personality_id,
         "--generations", str(generations),
         "--positions", str(positions),
+        "--games-per-pair", str(games_per_pair),
         "--depth", str(depth),
+        "--population", str(population),
         "--output", out_path,
     ]
     if fresh:
@@ -68,63 +71,81 @@ def train_one(personality_id: str, generations: int, positions: int, games_per_p
     }
 
 
-def verification_match(personality_id: str, games: int = 12, depth: int = 2, max_time: float = 0.15) -> dict:
+def verification_match(personality_id: str, games: int = 16, depth: int = 2, max_time: float = 0.15) -> dict:
     """
-    Head-to-head: trained weights vs the original preset.
-    Returns points for the trained side (1 = win, 0.5 = draw) and adoption decision.
+    OUT-OF-FAMILY verification: the trained weights play a diverse league panel
+    (other personalities' presets + classical anchor) on balanced colors.
+    A weight set that only beats its own family (inbred) will fail here.
+    Adoption threshold: >= 45% of the points against the panel.
     """
     weights_path = f"weights/trained_{personality_id}.json"
     trained = ChessBot(personality_id, custom_weights=EvalWeights.load(weights_path))
-    preset = ChessBot(personality_id)
+    panel = build_league_panel(exclude_pid=personality_id)
     neutral_eval = Evaluator(EvalWeights())
 
+    reps = max(1, games // (2 * len(panel) * len(GATE_OPENINGS)))
     trained_points = 0.0
     played = 0
-    for seed_moves in GATE_OPENINGS:
-        for trained_white in (True, False):
-            for _rep in range(max(1, games // (2 * len(GATE_OPENINGS)))):
-                board = chess.Board()
-                for uci in seed_moves:
-                    mv = chess.Move.from_uci(uci)
-                    if mv in board.legal_moves:
-                        board.push(mv)
+    per_opponent = {}
 
-                plies = 0
-                while plies < 60 and not board.is_game_over():
-                    is_trained_turn = (board.turn == chess.WHITE) == trained_white
-                    bot = trained if is_trained_turn else preset
-                    move, _ = bot.choose_move(board, depth=depth, max_time=max_time)
-                    if not move or move not in board.legal_moves:
-                        move = next(iter(board.legal_moves), None)
-                    if not move:
-                        break
-                    board.push(move)
-                    plies += 1
+    for opp_pid, opp_w in panel:
+        opp_bot = ChessBot(opp_pid, custom_weights=opp_w)
+        opp_points = 0.0
+        opp_played = 0
+        for seed_moves in GATE_OPENINGS:
+            for trained_white in (True, False):
+                for _rep in range(reps):
+                    board = chess.Board()
+                    for uci in seed_moves:
+                        mv = chess.Move.from_uci(uci)
+                        if mv in board.legal_moves:
+                            board.push(mv)
 
-                if board.is_checkmate():
-                    trained_won = (board.turn != chess.WHITE) == trained_white
-                    score = 1.0 if trained_won else 0.0
-                elif board.is_stalemate() or board.is_insufficient_material() or board.can_claim_draw():
-                    score = 0.5
-                else:
-                    ev = neutral_eval.evaluate(board)
-                    ev_from_trained = ev if trained_white else -ev
-                    if ev_from_trained > 150:
-                        score = 1.0
-                    elif ev_from_trained < -150:
-                        score = 0.0
-                    else:
+                    plies = 0
+                    while plies < 60 and not board.is_game_over():
+                        is_trained_turn = (board.turn == chess.WHITE) == trained_white
+                        bot = trained if is_trained_turn else opp_bot
+                        move, _ = bot.choose_move(board, depth=depth, max_time=max_time)
+                        if not move or move not in board.legal_moves:
+                            move = next(iter(board.legal_moves), None)
+                        if not move:
+                            break
+                        board.push(move)
+                        plies += 1
+
+                    if board.is_checkmate():
+                        trained_won = (board.turn != chess.WHITE) == trained_white
+                        score = 1.0 if trained_won else 0.0
+                    elif board.is_stalemate() or board.is_insufficient_material() or board.can_claim_draw():
                         score = 0.5
+                    else:
+                        ev = neutral_eval.evaluate(board)
+                        ev_from_trained = ev if trained_white else -ev
+                        if ev_from_trained > 150:
+                            score = 1.0
+                        elif ev_from_trained < -150:
+                            score = 0.0
+                        else:
+                            score = 0.5
 
-                trained_points += score
-                played += 1
+                    trained_points += score
+                    opp_points += score
+                    played += 1
+                    opp_played += 1
+        per_opponent[opp_pid] = {
+            "points": round(opp_points, 1),
+            "games": opp_played,
+            "pct": round(100.0 * opp_points / opp_played, 1) if opp_played else 0.0,
+        }
 
-    adopt = trained_points >= 0.42 * played  # keep preset if trained regressed
+    adopt = played > 0 and trained_points >= 0.45 * played
     return {
         "personality": personality_id,
+        "mode": "league-out-of-family",
         "games": played,
         "trained_points": round(trained_points, 1),
-        "trained_win_pct": round(100.0 * trained_points / played, 1),
+        "trained_win_pct": round(100.0 * trained_points / played, 1) if played else 0.0,
+        "per_opponent": per_opponent,
         "adopted": adopt,
     }
 
@@ -132,7 +153,8 @@ def verification_match(personality_id: str, games: int = 12, depth: int = 2, max
 def process_personality(pid: str, args) -> dict:
     print(f"\n🧬 [{pid}] training started (generations={args.generations}, "
           f"positions={args.positions}, games/pair={args.games_per_pair}, depth={args.depth})")
-    result = train_one(pid, args.generations, args.positions, args.games_per_pair, args.depth, fresh=args.fresh)
+    result = train_one(pid, args.generations, args.positions, args.games_per_pair, args.depth,
+                       fresh=args.fresh, population=args.population)
 
     if not result["train_ok"]:
         # Restore any previous weights so the bot keeps working
@@ -172,6 +194,8 @@ def main():
     parser.add_argument("--depth", type=int, default=2)
     parser.add_argument("--parallel", type=int, default=2)
     parser.add_argument("--gate-games", type=int, default=16)
+    parser.add_argument("--population", type=int, default=2,
+                        help="Candidates per generation (2 = champion + 1 mutant)")
     parser.add_argument("--fresh", action="store_true",
                         help="Ignore existing trained_<id>.json lineages and restart from presets")
     args = parser.parse_args()

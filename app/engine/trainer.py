@@ -11,6 +11,35 @@ from .evaluator import Evaluator, EvalWeights
 from .search import SearchEngine
 from .openings import GAMBITS
 
+# Classical "anchor" opponent: sane, textbook weights — approximates how
+# ordinary humans and classical engines play. Used in league training so that
+# candidates are selected for OUT-of-family strength, not in-family tricks.
+CLASSICAL_ANCHOR = EvalWeights(
+    name="Classical Anchor",
+    pawn_val=100.0, knight_val=320.0, bishop_val=330.0, rook_val=500.0, queen_val=900.0,
+    mobility_weight=8.0, center_control_weight=15.0, king_attack_weight=20.0,
+    king_safety_weight=18.0, development_weight=18.0, open_file_weight=16.0,
+    bishop_pair_weight=40.0, passed_pawn_weight=25.0, pawn_structure_weight=-12.0,
+    gambit_aggression=1.0,
+)
+
+
+def build_league_panel(exclude_pid: Optional[str] = None) -> List[Any]:
+    """
+    Diverse opponent panel for league training: every other personality's
+    preset weights plus the classical anchor. Returns list of (pid, weights).
+    """
+    from .bot import BOT_PERSONALITIES
+    panel = []
+    for pid, p in BOT_PERSONALITIES.items():
+        if pid == exclude_pid:
+            continue
+        w = EvalWeights(**{k: v for k, v in p["weights"].to_dict().items()})
+        w.name = f"Preset {p['name']}"
+        panel.append((pid, w))
+    panel.append(("anchor", copy.deepcopy(CLASSICAL_ANCHOR)))
+    return panel
+
 # List of gambit starting FENs / move sequences to train against
 GAMBIT_TRAINING_POSITIONS = [
     # King's Gambit Accepted / Declined
@@ -162,13 +191,19 @@ class BotTrainer:
         max_plies: int = 60,
         population_size: int = 3,
         champion_label: str = "Trained Bot",
-        start_generation: int = 0
+        start_generation: int = 0,
+        league_opponents: Optional[List[Any]] = None
     ) -> EvalWeights:
         """
-        Executes evolutionary self-play reinforcement learning to optimize weights.
+        Executes evolutionary reinforcement learning to optimize weights.
+
+        Two modes:
+        - League mode (league_opponents given): candidates play a diverse panel
+          of opponents (other presets + classical anchor). This directly
+          optimizes out-of-family strength and avoids self-play inbreeding.
+        - Self-play mode (default): candidates only play each other (legacy).
         Opening positions rotate through ALL gambit training positions across
-        generations so candidates are tested on varied gambit structures.
-        `start_generation` continues an existing lineage's generation numbering.
+        generations. `start_generation` continues an existing lineage's numbering.
         """
         self.is_training = True
         self.total_generations = start_generation + generations
@@ -196,37 +231,63 @@ class BotTrainer:
             scores = [0.0] * len(candidates)
             total_games = 0
 
-            # Tournament between candidates over gambit start positions
-            for pos_name, moves in gen_positions:
-                for i in range(len(candidates)):
-                    for j in range(i + 1, len(candidates)):
-                        for _ in range(max(1, games_per_pair)):
-                            if not self.is_training:
-                                break
+            if league_opponents:
+                # LEAGUE MODE: every candidate plays the diverse panel (both colors)
+                reps = max(1, games_per_pair)
+                for pos_name, moves in gen_positions:
+                    for i, cand_w in enumerate(candidates):
+                        for _opp_pid, opp_w in league_opponents:
+                            for _ in range(reps):
+                                if not self.is_training:
+                                    break
+                                # Candidate as White
+                                res = self.play_self_game(
+                                    Evaluator(cand_w), Evaluator(opp_w), moves,
+                                    depth=search_depth, max_plies=max_plies
+                                )
+                                scores[i] += res
+                                total_games += 1
+                                # Candidate as Black
+                                res2 = self.play_self_game(
+                                    Evaluator(opp_w), Evaluator(cand_w), moves,
+                                    depth=search_depth, max_plies=max_plies
+                                )
+                                scores[i] += (1.0 - res2)
+                                total_games += 1
+                    if not self.is_training:
+                        break
+            else:
+                # SELF-PLAY MODE (legacy): tournament between candidates
+                for pos_name, moves in gen_positions:
+                    for i in range(len(candidates)):
+                        for j in range(i + 1, len(candidates)):
+                            for _ in range(max(1, games_per_pair)):
+                                if not self.is_training:
+                                    break
 
-                            # Game 1: i is White, j is Black
-                            res = self.play_self_game(
-                                Evaluator(candidates[i]),
-                                Evaluator(candidates[j]),
-                                moves,
-                                depth=search_depth,
-                                max_plies=max_plies
-                            )
-                            scores[i] += res
-                            scores[j] += (1.0 - res)
-                            total_games += 1
+                                # Game 1: i is White, j is Black
+                                res = self.play_self_game(
+                                    Evaluator(candidates[i]),
+                                    Evaluator(candidates[j]),
+                                    moves,
+                                    depth=search_depth,
+                                    max_plies=max_plies
+                                )
+                                scores[i] += res
+                                scores[j] += (1.0 - res)
+                                total_games += 1
 
-                            # Game 2: j is White, i is Black (color balance)
-                            res2 = self.play_self_game(
-                                Evaluator(candidates[j]),
-                                Evaluator(candidates[i]),
-                                moves,
-                                depth=search_depth,
-                                max_plies=max_plies
-                            )
-                            scores[j] += res2
-                            scores[i] += (1.0 - res2)
-                            total_games += 1
+                                # Game 2: j is White, i is Black (color balance)
+                                res2 = self.play_self_game(
+                                    Evaluator(candidates[j]),
+                                    Evaluator(candidates[i]),
+                                    moves,
+                                    depth=search_depth,
+                                    max_plies=max_plies
+                                )
+                                scores[j] += res2
+                                scores[i] += (1.0 - res2)
+                                total_games += 1
 
             # Determine generation champion (ties keep the incumbent champion)
             best_idx = scores.index(max(scores))

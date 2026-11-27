@@ -15,7 +15,7 @@ import os
 # Add local directory to python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from app.engine.trainer import BotTrainer
+from app.engine.trainer import BotTrainer, build_league_panel
 from app.engine.evaluator import EvalWeights
 from app.engine.bot import BOT_PERSONALITIES
 
@@ -31,6 +31,11 @@ def main():
     parser.add_argument("--output", type=str, default=None, help="Output path for weights")
     parser.add_argument("--fresh", action="store_true",
                         help="Start from the personality preset instead of continuing existing trained weights")
+    parser.add_argument("--population", type=int, default=2, help="Candidates per generation (2 = champion + 1 mutant)")
+    parser.add_argument("--games-per-pair", type=int, default=1,
+                        help="League mode: games per (candidate, opponent, position, color); self-play mode: games per pair")
+    parser.add_argument("--selfplay", action="store_true",
+                        help="Use legacy self-play training instead of league training")
     args = parser.parse_args()
 
     if args.personality and args.personality in BOT_PERSONALITIES:
@@ -75,8 +80,19 @@ def main():
     print(f"Target Generations: {args.generations} (ending at Gen {start_gen + args.generations})")
     print(f"Self-play Depth:   {args.depth}")
     print(f"Positions per Gen: {args.positions}")
+    print(f"Population:        {args.population}")
     print(f"Output File:       {output_path}")
     print("=" * 60)
+
+    # League mode (default): candidates play a diverse opponent panel —
+    # other styles' presets + a classical anchor. Anti-inbreeding.
+    league_panel = None
+    if not args.selfplay:
+        league_panel = build_league_panel(
+            exclude_pid=args.personality if args.personality in BOT_PERSONALITIES else None
+        )
+        names = ", ".join(w.name for _pid, w in league_panel)
+        print(f"⚖️  LEAGUE MODE — candidates play {len(league_panel)} opponents: {names}")
 
     trainer = BotTrainer(output_path=output_path)
 
@@ -99,6 +115,8 @@ def main():
         initial_weights=base_weights,
         champion_label=champion_label,
         start_generation=start_gen,
+        population_size=max(2, args.population),
+        league_opponents=league_panel,
         progress_callback=on_progress
     )
 

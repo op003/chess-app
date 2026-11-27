@@ -76,6 +76,21 @@ KING_MIDGAME_TABLE = [
     20, 30, 10,  0,  0, 10, 30, 20
 ]
 
+# Endgame: the king becomes a fighting piece — centralization is good
+KING_ENDGAME_TABLE = [
+   -50,-40,-30,-20,-20,-30,-40,-50,
+   -30,-20,-10,  0,  0,-10,-20,-30,
+   -20,-10, 20, 30, 30, 20,-10,-20,
+   -10,  0, 30, 40, 40, 30,  0,-10,
+   -10,  0, 30, 40, 40, 30,  0,-10,
+   -20,-10, 20, 30, 30, 20,-10,-20,
+   -30,-20,-10,  0,  0,-10,-20,-30,
+   -50,-30,-30,-30,-30,-30,-30,-50,
+]
+
+# Total non-pawn material (both sides) at the start of a game — used for phase
+MAX_PHASE_NPM = 2 * (2 * 315 + 2 * 330 + 2 * 500 + 900)
+
 
 @dataclass
 class EvalWeights:
@@ -165,23 +180,36 @@ class Evaluator:
 
         white_material = 0.0
         black_material = 0.0
+        white_npm = 0.0
+        black_npm = 0.0
 
         for piece_type, base_val in piece_values.items():
             for sq in board.pieces(piece_type, chess.WHITE):
                 white_material += base_val
+                if piece_type != chess.PAWN:
+                    white_npm += base_val
                 sq_idx = 63 - sq  # Mirror: a1=63 (back rank, low bonus), a8=7 (promo rank, high bonus)
                 score += base_val + (tables[piece_type][sq_idx] * w.pst_weight)
 
             for sq in board.pieces(piece_type, chess.BLACK):
                 black_material += base_val
+                if piece_type != chess.PAWN:
+                    black_npm += base_val
                 sq_idx = sq
                 score -= base_val + (tables[piece_type][sq_idx] * w.pst_weight)
 
-        # King PST
+        # Game phase: 1.0 = opening/full material, -> 0.0 = bare endgame
+        phase = min(1.0, (white_npm + black_npm) / MAX_PHASE_NPM)
+
+        # King PST: interpolate midgame (safety corner) -> endgame (active center)
         for sq in board.pieces(chess.KING, chess.WHITE):
-            score += tables[chess.KING][63 - sq] * w.pst_weight
+            mid = tables[chess.KING][63 - sq]
+            end = KING_ENDGAME_TABLE[63 - sq]
+            score += (mid * phase + end * (1.0 - phase)) * w.pst_weight
         for sq in board.pieces(chess.KING, chess.BLACK):
-            score -= tables[chess.KING][sq] * w.pst_weight
+            mid = tables[chess.KING][sq]
+            end = KING_ENDGAME_TABLE[sq]
+            score -= (mid * phase + end * (1.0 - phase)) * w.pst_weight
 
         # 2. Bishop Pair Bonus
         if len(board.pieces(chess.BISHOP, chess.WHITE)) >= 2:
@@ -225,18 +253,31 @@ class Evaluator:
             white_attack_pressure = 0
             for ring_sq in b_king_ring:
                 white_attack_pressure += len(board.attackers(chess.WHITE, ring_sq))
-            score += white_attack_pressure * w.king_attack_weight * w.gambit_aggression
+            # Attacks matter less as material leaves the board (endgame fade)
+            score += white_attack_pressure * w.king_attack_weight * w.gambit_aggression * min(1.0, phase * 1.5)
 
         if w_king_sq is not None:
             w_king_ring = chess.SquareSet(chess.BB_KING_ATTACKS[w_king_sq])
             black_attack_pressure = 0
             for ring_sq in w_king_ring:
                 black_attack_pressure += len(board.attackers(chess.BLACK, ring_sq))
-            score -= black_attack_pressure * w.king_attack_weight * w.gambit_aggression
+            score -= black_attack_pressure * w.king_attack_weight * w.gambit_aggression * min(1.0, phase * 1.5)
+
+        # Mop-up: when decisively ahead in a bare endgame, drive the defending
+        # king to the edge and bring our own king closer (converts material to mate).
+        if phase < 0.25:
+            npm_lead = white_npm - black_npm
+            if abs(npm_lead) >= 400 and w_king_sq is not None and b_king_sq is not None:
+                def edge_dist(sq):
+                    return max(abs(chess.square_file(sq) - 4.5), abs(chess.square_rank(sq) - 4.5))
+                kings_dist = chess.square_distance(w_king_sq, b_king_sq)
+                cornering = edge_dist(b_king_sq if npm_lead > 0 else w_king_sq) * 8 + (7 - kings_dist) * 6
+                score += cornering if npm_lead > 0 else -cornering
 
         # 5b. King Safety — missing pawn shield in front of the king ("careful play" term)
         king_safety = w.king_safety_weight
         if king_safety:
+            shield_phase = min(1.0, phase * 1.3)  # fades out in bare endgames
             for color, king_sq in ((chess.WHITE, w_king_sq), (chess.BLACK, b_king_sq)):
                 if king_sq is None:
                     continue
@@ -258,9 +299,36 @@ class Evaluator:
                             if piece is None or piece.piece_type != chess.PAWN or piece.color != color:
                                 shield_penalty += 0.5
                 if color == chess.WHITE:
-                    score -= shield_penalty * king_safety
+                    score -= shield_penalty * king_safety * shield_phase
                 else:
-                    score += shield_penalty * king_safety
+                    score += shield_penalty * king_safety * shield_phase
+
+        # 5c. Passed Pawns — decisive in endgames (weight was previously unused)
+        passed_weight = w.passed_pawn_weight
+        if passed_weight:
+            white_pawns = list(board.pieces(chess.PAWN, chess.WHITE))
+            black_pawns = list(board.pieces(chess.PAWN, chess.BLACK))
+            for pawn_sq, color, enemies in (
+                [(sq, chess.WHITE, black_pawns) for sq in white_pawns] +
+                [(sq, chess.BLACK, white_pawns) for sq in black_pawns]
+            ):
+                f = chess.square_file(pawn_sq)
+                r = chess.square_rank(pawn_sq)
+                is_pass = True
+                for e_sq in enemies:
+                    if abs(chess.square_file(e_sq) - f) <= 1:
+                        if color == chess.WHITE and chess.square_rank(e_sq) > r:
+                            is_pass = False
+                            break
+                        if color == chess.BLACK and chess.square_rank(e_sq) < r:
+                            is_pass = False
+                            break
+                if is_pass:
+                    # Advancement: 0 (home) .. 5 (6th rank, one step from promotion)
+                    adv = (r - 1) if color == chess.WHITE else (6 - r)
+                    boost = 1.0 + (1.0 - phase)  # up to 2x in endgame
+                    bonus = passed_weight * (0.6 + 0.4 * adv / 5.0) * boost
+                    score += bonus if color == chess.WHITE else -bonus
 
         # 6. Open Files for Rooks
         for sq in board.pieces(chess.ROOK, chess.WHITE):

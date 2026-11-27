@@ -1,15 +1,15 @@
 {
-  "finished": "2026-11-27 06:08:10",
-  "total_seconds": 14483.6,
+  "finished": "2026-11-27 17:05:20",
+  "total_seconds": 7951.3,
   "results": [
     {
       "personality": "trained",
       "output": "weights/trained_trained.json",
       "train_ok": true,
-      "train_seconds": 14079.3,
-      "stdout_tail": " Center Control:      10.77\n  Gambit Aggression:   2.28\n  Pawn Value:          119.65\n  Elapsed:             1217.14s\n\n[Generation 9/12]\n  Games Played:        144\n  Best Score:          52.5\n  Mobility Weight:     6.4\n  King Attack Weight:  15.18\n  King Safety Weight:  18.84\n  Center Control:      10.77\n  Gambit Aggression:   2.28\n  Pawn Value:          119.65\n  Elapsed:             1174.02s\n\n[Generation 10/12]\n  Games Played:        144\n  Best Score:          46.5\n  Mobility Weight:     7.08\n  King Attack Weight:  16.11\n  King Safety Weight:  21.57\n  Center Control:      10.77\n  Gambit Aggression:   2.28\n  Pawn Value:          119.65\n  Elapsed:             1192.99s\n\n[Generation 11/12]\n  Games Played:        144\n  Best Score:          49.0\n  Mobility Weight:     7.08\n  King Attack Weight:  15.5\n  King Safety Weight:  20.37\n  Center Control:      10.77\n  Gambit Aggression:   2.1\n  Pawn Value:          96.78\n  Elapsed:             1174.48s\n\n[Generation 12/12]\n  Games Played:        144\n  Best Score:          53.0\n  Mobility Weight:     7.08\n  King Attack Weight:  15.6\n  King Safety Weight:  22.26\n  Center Control:      9.67\n  Gambit Aggression:   2.28\n  Pawn Value:          94.81\n  Elapsed:             1135.45s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_trained.json\nSummary: Aggression=2.28, KingAttack=15.6, KingSafety=22.26\n============================================================\n",
+      "train_seconds": 7563.7,
+      "stdout_tail": "eight:  18.46\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1324.79s\n\n[Generation 3/6]\n  Games Played:        144\n  Best Score:          49.5\n  Mobility Weight:     6.58\n  King Attack Weight:  20.88\n  King Safety Weight:  18.46\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1211.38s\n\n[Generation 4/6]\n  Games Played:        144\n  Best Score:          46.0\n  Mobility Weight:     5.71\n  King Attack Weight:  19.18\n  King Safety Weight:  14.96\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1257.77s\n\n[Generation 5/6]\n  Games Played:        144\n  Best Score:          47.5\n  Mobility Weight:     5.71\n  King Attack Weight:  19.18\n  King Safety Weight:  14.96\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1304.65s\n\n[Generation 6/6]\n  Games Played:        144\n  Best Score:          55.0\n  Mobility Weight:     5.71\n  King Attack Weight:  19.18\n  King Safety Weight:  14.96\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1265.58s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_trained.json\nSummary: Aggression=1.8, KingAttack=19.18, KingSafety=14.96\n============================================================\n",
       "stderr_tail": "",
-      "fresh_start": true,
+      "fresh_start": false,
       "verification": {
         "personality": "trained",
         "mode": "league-out-of-family",
@@ -18,14 +18,14 @@
         "trained_win_pct": 58.3,
         "per_opponent": {
           "tal": {
-            "points": 5.5,
+            "points": 3.0,
             "games": 8,
-            "pct": 68.8
+            "pct": 37.5
           },
           "morphy": {
-            "points": 4.5,
+            "points": 3.5,
             "games": 8,
-            "pct": 56.2
+            "pct": 43.8
           },
           "kasparov": {
             "points": 4.0,
@@ -33,19 +33,19 @@
             "pct": 50.0
           },
           "rosen_trap": {
-            "points": 4.5,
+            "points": 3.0,
             "games": 8,
-            "pct": 56.2
+            "pct": 37.5
           },
           "alien_gambit": {
-            "points": 5.0,
+            "points": 8.0,
             "games": 8,
-            "pct": 62.5
+            "pct": 100.0
           },
           "anchor": {
-            "points": 4.5,
+            "points": 6.5,
             "games": 8,
-            "pct": 56.2
+            "pct": 81.2
           }
         },
         "adopted": true

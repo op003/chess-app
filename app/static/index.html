@@ -4159,6 +4159,7 @@ class GambitChessApp {
         this.sanMovesList = [];
         this.capturedByWhite = [];
         this.capturedByBlack = [];
+        this._gameOverShown = false;   // re-arm the game-over overlay
         this.board.loadFen(INITIAL_FEN);
 
         this.renderMoveHistory();
@@ -4347,17 +4348,51 @@ class GambitChessApp {
 
         if (totalLegalMoves === 0) {
             if (this.board.checkSquare !== null) {
-                const winner = this.board.turn === 'w' ? 'Black' : 'White';
+                const winnerColor = this.board.turn === 'w' ? 'black' : 'white';
+                const winnerLabel = winnerColor === 'white' ? 'White' : 'Black';
                 window.sounds.playVictory();
-                this.setBotSpeech(`Checkmate! ${winner} is victorious! What a game!`);
-                alert(`Checkmate! ${winner} wins!`);
+                this.setBotSpeech(`Checkmate! ${winnerLabel} is victorious! What a game!`);
+                // Perspective: did the human win?
+                const userWon = (this.userColor === 'w' && winnerColor === 'white') ||
+                                (this.userColor === 'b' && winnerColor === 'black');
+                const resultText = userWon
+                    ? `<span class="win-text">คุณชนะ! 🎉</span> — ${winnerLabel} ทำเมทสำเร็จ`
+                    : `<span class="lose-text">คุณแพ้ 😢</span> — ${winnerLabel} ทำเมทสำเร็จ`;
+                this.showGameOver('🏆', 'เมทสำเร็จ (Checkmate)!', resultText);
             } else {
                 this.setBotSpeech("Stalemate! The game ends in a tactical draw.");
-                alert("Stalemate! Game is a draw.");
+                this.showGameOver('🤝', 'เสมอ (Stalemate)!', 'ไม่มีตัวเดินที่ถูกกฎ — เกมจบเสมอ');
             }
             return true;
         }
+
+        // 50-move rule draw (halfmove clock reached 100)
+        if (this.board.halfmoveClock >= 100 && !this._gameOverShown) {
+            this.setBotSpeech("Draw! 50 moves without a capture or pawn move.");
+            this.showGameOver('🤝', 'เสมอ (50-move rule)!', '50 อัตราไม่มีการกินหมาก/เดินเบี้ย — เกมจบเสมอ');
+            return true;
+        }
         return false;
+    }
+
+    showGameOver(icon, title, subtitleHtml) {
+        if (this._gameOverShown) return;
+        this._gameOverShown = true;
+
+        const overlay = document.getElementById('game-over-overlay');
+        if (!overlay) return;
+        document.getElementById('game-over-icon').textContent = icon;
+        document.getElementById('game-over-title').textContent = title;
+        document.getElementById('game-over-subtitle').innerHTML = subtitleHtml;
+        overlay.classList.add('active');
+
+        const closeBtn = document.getElementById('game-over-close');
+        const rematchBtn = document.getElementById('game-over-rematch');
+        closeBtn.onclick = () => overlay.classList.remove('active');
+        rematchBtn.onclick = () => {
+            overlay.classList.remove('active');
+            this.startNewGame(this.userColor);
+        };
     }
 
     addMoveToHistory(uci, san = null) {
@@ -4417,14 +4452,60 @@ window.onload = () => {
 
     </script>
 
+    <!-- Game Over overlay (centered) -->
+    <style>
+        #game-over-overlay {
+            position: fixed; inset: 0; z-index: 10000;
+            display: none; align-items: center; justify-content: center;
+            background: rgba(4, 8, 16, 0.74);
+            backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+        }
+        #game-over-overlay.active { display: flex; }
+        #game-over-card {
+            text-align: center; padding: 38px 52px; max-width: 92vw;
+            background: #161b22; border: 1px solid #30363d; border-radius: 18px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+            animation: gameOverPop .3s cubic-bezier(.18, 1.25, .4, 1) both;
+        }
+        @keyframes gameOverPop {
+            from { transform: scale(.7); opacity: 0; }
+            to   { transform: scale(1);  opacity: 1; }
+        }
+        #game-over-icon { font-size: 58px; line-height: 1.1; filter: drop-shadow(0 4px 14px rgba(0,0,0,.5)); }
+        #game-over-title { margin: 14px 0 6px; font-size: 30px; letter-spacing: .5px; color: #e6edf3; }
+        #game-over-subtitle { margin: 0 0 24px; font-size: 15px; color: #8b949e; }
+        #game-over-subtitle .win-text { color: #3fb950; font-weight: 700; }
+        #game-over-subtitle .lose-text { color: #f85149; font-weight: 700; }
+        .game-over-actions { display: flex; gap: 12px; justify-content: center; }
+        .game-over-btn {
+            border: 1px solid #30363d; border-radius: 10px; cursor: pointer;
+            padding: 10px 22px; font-size: 14px; font-weight: 600; color: #e6edf3;
+            background: #21262d; transition: transform .12s, border-color .12s, background .12s;
+        }
+        .game-over-btn:hover { border-color: #58a6ff; transform: translateY(-1px); }
+        .game-over-btn.primary { background: #1f6feb; border-color: #1f6feb; }
+        .game-over-btn.primary:hover { background: #388bfd; border-color: #388bfd; }
+    </style>
+    <div id="game-over-overlay">
+        <div id="game-over-card">
+            <div id="game-over-icon">🏆</div>
+            <h2 id="game-over-title">Checkmate!</h2>
+            <p id="game-over-subtitle"></p>
+            <div class="game-over-actions">
+                <button class="game-over-btn primary" id="game-over-rematch">🔄 แก้มือ — เกมใหม่</button>
+                <button class="game-over-btn" id="game-over-close">ปิดหน้าต่างนี้</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Version badge (bottom-right corner) -->
     <div id="version-badge" style="position:fixed; right:12px; bottom:10px; z-index:9999;
          font-family:'Segoe UI',system-ui,sans-serif; font-size:11px; font-weight:600;
          letter-spacing:0.4px; color:#8b949e; background:rgba(33,38,45,0.85);
          border:1px solid #30363d; border-radius:999px; padding:4px 12px;
          pointer-events:none; user-select:none; box-shadow:0 2px 8px rgba(0,0,0,0.35);"
-         title="Gambit Master — league-trained bots, promotion fix, Alien Gambit">
-        ♟️ Gambit Master · v1.5 Beta
+         title="Gambit Master — league-trained bots, game-over overlay, promotion fix, Alien Gambit">
+        ♟️ Gambit Master · v1.6 Beta
     </div>
 </body>
 </html>

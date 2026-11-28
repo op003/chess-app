@@ -1,26 +1,26 @@
 {
-  "finished": "2026-11-27 17:05:20",
-  "total_seconds": 7951.3,
+  "finished": "2026-11-28 07:35:40",
+  "total_seconds": 7872.4,
   "results": [
     {
-      "personality": "trained",
-      "output": "weights/trained_trained.json",
+      "personality": "rosen_trap",
+      "output": "weights/trained_rosen_trap.json",
       "train_ok": true,
-      "train_seconds": 7563.7,
-      "stdout_tail": "eight:  18.46\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1324.79s\n\n[Generation 3/6]\n  Games Played:        144\n  Best Score:          49.5\n  Mobility Weight:     6.58\n  King Attack Weight:  20.88\n  King Safety Weight:  18.46\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1211.38s\n\n[Generation 4/6]\n  Games Played:        144\n  Best Score:          46.0\n  Mobility Weight:     5.71\n  King Attack Weight:  19.18\n  King Safety Weight:  14.96\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1257.77s\n\n[Generation 5/6]\n  Games Played:        144\n  Best Score:          47.5\n  Mobility Weight:     5.71\n  King Attack Weight:  19.18\n  King Safety Weight:  14.96\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1304.65s\n\n[Generation 6/6]\n  Games Played:        144\n  Best Score:          55.0\n  Mobility Weight:     5.71\n  King Attack Weight:  19.18\n  King Safety Weight:  14.96\n  Center Control:      19.1\n  Gambit Aggression:   1.8\n  Pawn Value:          96.61\n  Elapsed:             1265.58s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_trained.json\nSummary: Aggression=1.8, KingAttack=19.18, KingSafety=14.96\n============================================================\n",
+      "train_seconds": 7473.7,
+      "stdout_tail": "5.15\n  Center Control:      13.75\n  Gambit Aggression:   2.2\n  Pawn Value:          89.76\n  Elapsed:             1286.83s\n\n[Generation 3/6]\n  Games Played:        144\n  Best Score:          25.5\n  Mobility Weight:     12.97\n  King Attack Weight:  35.0\n  King Safety Weight:  15.15\n  Center Control:      13.75\n  Gambit Aggression:   2.2\n  Pawn Value:          89.76\n  Elapsed:             1231.79s\n\n[Generation 4/6]\n  Games Played:        144\n  Best Score:          33.0\n  Mobility Weight:     12.97\n  King Attack Weight:  35.0\n  King Safety Weight:  15.15\n  Center Control:      13.75\n  Gambit Aggression:   2.2\n  Pawn Value:          89.76\n  Elapsed:             1254.86s\n\n[Generation 5/6]\n  Games Played:        144\n  Best Score:          37.5\n  Mobility Weight:     12.97\n  King Attack Weight:  35.0\n  King Safety Weight:  15.15\n  Center Control:      13.75\n  Gambit Aggression:   2.2\n  Pawn Value:          89.76\n  Elapsed:             1268.02s\n\n[Generation 6/6]\n  Games Played:        144\n  Best Score:          33.0\n  Mobility Weight:     12.97\n  King Attack Weight:  37.71\n  King Safety Weight:  15.15\n  Center Control:      16.45\n  Gambit Aggression:   2.2\n  Pawn Value:          89.76\n  Elapsed:             1203.68s\n\n============================================================\n\u2705 Training Complete!\nSaved optimized champion weights to: weights/trained_rosen_trap.json\nSummary: Aggression=2.2, KingAttack=37.71, KingSafety=15.15\n============================================================\n",
       "stderr_tail": "",
       "fresh_start": false,
       "verification": {
-        "personality": "trained",
+        "personality": "rosen_trap",
         "mode": "league-out-of-family",
         "games": 48,
-        "trained_points": 28.0,
-        "trained_win_pct": 58.3,
+        "trained_points": 24.5,
+        "trained_win_pct": 51.0,
         "per_opponent": {
           "tal": {
-            "points": 3.0,
+            "points": 6.0,
             "games": 8,
-            "pct": 37.5
+            "pct": 75.0
           },
           "morphy": {
             "points": 3.5,
@@ -32,20 +32,20 @@
             "games": 8,
             "pct": 50.0
           },
-          "rosen_trap": {
+          "alien_gambit": {
+            "points": 4.5,
+            "games": 8,
+            "pct": 56.2
+          },
+          "trained": {
             "points": 3.0,
             "games": 8,
             "pct": 37.5
           },
-          "alien_gambit": {
-            "points": 8.0,
-            "games": 8,
-            "pct": 100.0
-          },
           "anchor": {
-            "points": 6.5,
+            "points": 3.5,
             "games": 8,
-            "pct": 81.2
+            "pct": 43.8
           }
         },
         "adopted": true

@@ -1,0 +1,19 @@
+{
+  "name": "Trained The Trap Master (Stafford Specialist) (Gen 6)",
+  "pawn_val": 89.76,
+  "knight_val": 330.0,
+  "bishop_val": 335.84,
+  "rook_val": 495.0,
+  "queen_val": 930.0,
+  "pst_weight": 1.0,
+  "mobility_weight": 12.97,
+  "center_control_weight": 16.45,
+  "king_attack_weight": 37.71,
+  "king_safety_weight": 15.15,
+  "development_weight": 22.88,
+  "open_file_weight": 18.55,
+  "bishop_pair_weight": 45.0,
+  "passed_pawn_weight": 27.16,
+  "pawn_structure_weight": -10.37,
+  "gambit_aggression": 2.2
+}

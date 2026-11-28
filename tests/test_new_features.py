@@ -132,12 +132,17 @@ class TestPerPersonalityWeights(unittest.TestCase):
             if saved is not None:
                 saved.save(test_path)
 
-    def test_server_personalities_endpoint_includes_alien(self):
+    def test_server_personalities_endpoint_championship_roster(self):
         from app.server import get_personalities
         result = get_personalities()
         ids = [p["id"] for p in result["personalities"]]
-        self.assertIn("alien_gambit", ids)
-        self.assertIn("tal", ids)
+        # v1.8: website roster = championship top-3; bottom-3 retired from the UI
+        self.assertIn("trained", ids)
+        self.assertIn("kasparov", ids)
+        self.assertIn("morphy", ids)
+        self.assertNotIn("alien_gambit", ids)
+        self.assertNotIn("tal", ids)
+        self.assertNotIn("rosen_trap", ids)
         for p in result["personalities"]:
             self.assertIn("has_trained_weights", p)
 

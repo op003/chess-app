@@ -993,12 +993,9 @@ select:focus {
                 <div class="control-row">
                     <label for="personality-select">Opponent Style:</label>
                     <select id="personality-select">
-                        <option value="tal">&#129497;&#8205;&#9794;&#65039; Mikhail Tal (Hyper-Aggressive)</option>
-                        <option value="morphy">&#9876;&#65039; Paul Morphy (Romantic Attacker)</option>
-                        <option value="kasparov">&#128081; Garry Kasparov (Dynamic Pressure)</option>
-                        <option value="rosen_trap">&#127919; Trap Master (Stafford Specialist)</option>
-                        <option value="alien_gambit">&#128125; Alien Gambit (Brilliant Sacrifices)</option>
-                        <option value="trained">&#129302; Custom Trained Bot (Learned Weights)</option>
+                        <option value="trained">&#129302; Custom Trained Bot (Champion)</option>
+                        <option value="kasparov">&#128081; Garry Kasparov (Runner-up)</option>
+                        <option value="morphy">&#9876;&#65039; Paul Morphy (Third Place)</option>
                     </select>
                 </div>
                 <div class="control-row">
@@ -1076,9 +1073,9 @@ select:focus {
             <div class="control-row">
                 <label for="train-base-personality">Base Personality:</label>
                 <select id="train-base-personality">
-                    <option value="tal">Mikhail Tal (Attacking Baseline)</option>
-                    <option value="morphy">Paul Morphy (Development Baseline)</option>
+                    <option value="trained">Custom Trained (Champion Baseline)</option>
                     <option value="kasparov">Garry Kasparov (Dynamic Baseline)</option>
+                    <option value="morphy">Paul Morphy (Development Baseline)</option>
                 </select>
             </div>
             <div class="training-progress-container">
@@ -1163,6 +1160,11 @@ select:focus {
 
     <!-- Offline JS engine: mirrors the Python API so the game works on static hosting (Vercel etc.) -->
     <script>
+// Championship roster (v1.8): tournament_championship/ (1222 games, double round-robin)
+// ranked all six styles — bottom-3 are retired from the website UI. They remain in the
+// engine internals (weights/book lookups) so offline tools and tests keep working.
+window.RETIRED_BOTS = ['alien_gambit', 'tal', 'rosen_trap'];
+
 /**
  * Self-contained Client-Side Chess Engine, Gambit Book, Evaluator, Trainer & Reviewer.
  * Acts as a seamless fallback when the Python FastAPI backend is unreachable
@@ -1838,12 +1840,14 @@ class OfflineEngine {
     }
 
     getPersonalities() {
-        return FALLBACK_PERSONALITIES.map(p => {
-            if (p.id === 'trained' && this.trainedWeights) {
-                return { ...p, weights: { ...this.trainedWeights } };
-            }
-            return { ...p, weights: { ...p.weights } };
-        });
+        return FALLBACK_PERSONALITIES
+            .filter(p => !(window.RETIRED_BOTS || []).includes(p.id))
+            .map(p => {
+                if (p.id === 'trained' && this.trainedWeights) {
+                    return { ...p, weights: { ...this.trainedWeights } };
+                }
+                return { ...p, weights: { ...p.weights } };
+            });
     }
 
     getPersonalityWeights(personalityId, customWeights = null) {
@@ -2108,7 +2112,7 @@ class OfflineEngine {
         };
     }
 
-    chooseMove(fen, movesList = [], personalityId = 'tal', preferredGambitId = null, depth = 3, customWeights = null) {
+    chooseMove(fen, movesList = [], personalityId = 'trained', preferredGambitId = null, depth = 3, customWeights = null) {
         const state = FastChessState.fromFen(fen);
         const legal = state.legalMoves();
         if (legal.length === 0) return null;
@@ -2167,7 +2171,7 @@ class OfflineEngine {
         };
     }
 
-    evaluatePosition(fen, personalityId = 'tal', customWeights = null) {
+    evaluatePosition(fen, personalityId = 'trained', customWeights = null) {
         const state = FastChessState.fromFen(fen);
         const legal = state.legalMoves();
         const inCheck = state.isInCheck();
@@ -2190,7 +2194,7 @@ class OfflineEngine {
         };
     }
 
-    async trainEvolutionary({ generations = 3, depth = 1, personality = 'tal' }, onProgress, shouldStop) {
+    async trainEvolutionary({ generations = 3, depth = 1, personality = 'trained' }, onProgress, shouldStop) {
         const base = this.getPersonalityWeights(personality);
         let champion = { ...base };
         const positions = [
@@ -2725,7 +2729,7 @@ class TrainingLab {
 
         const generations = parseInt(document.getElementById('train-generations').value, 10) || 3;
         const depth = parseInt(document.getElementById('train-depth').value, 10) || 2;
-        const basePersonality = document.getElementById('train-base-personality').value || 'tal';
+        const basePersonality = document.getElementById('train-base-personality').value || 'trained';
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/ws/train`;
@@ -3995,7 +3999,7 @@ class GambitChessApp {
     constructor() {
         this.board = null;
         this.userColor = 'w'; // 'w' or 'b'
-        this.currentPersonality = 'tal';
+        this.currentPersonality = 'trained';
         this.currentGambit = null;
         this.depth = 4;
         this.movesList = []; // list of UCI moves in this game
@@ -4091,6 +4095,8 @@ class GambitChessApp {
             console.error('No personalities available (server + offline both unavailable)');
             return;
         }
+        // v1.8: only the championship's top-3 styles are selectable on the website
+        list = list.filter(p => !(window.RETIRED_BOTS || []).includes(p.id));
         const pSelect = document.getElementById('personality-select');
         if (!pSelect) return;
 
@@ -4505,7 +4511,7 @@ window.onload = () => {
          border:1px solid #30363d; border-radius:999px; padding:4px 12px;
          pointer-events:none; user-select:none; box-shadow:0 2px 8px rgba(0,0,0,0.35);"
          title="Gambit Master — league-trained bots, game-over overlay, promotion fix, Alien Gambit">
-        ♟️ Gambit Master · v1.7 Beta
+        ♟️ Gambit Master · v1.8 Beta
     </div>
 </body>
 </html>

@@ -6,7 +6,7 @@ class GambitChessApp {
     constructor() {
         this.board = null;
         this.userColor = 'w'; // 'w' or 'b'
-        this.currentPersonality = 'tal';
+        this.currentPersonality = 'trained';
         this.currentGambit = null;
         this.depth = 4;
         this.movesList = []; // list of UCI moves in this game

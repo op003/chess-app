@@ -478,5 +478,9 @@ if os.path.exists(static_dir):
 def serve_index():
     index_file = os.path.join(static_dir, "index.html")
     if os.path.exists(index_file):
-        return FileResponse(index_file)
+        # Always revalidate HTML so version updates (badges, UI fixes) show up
+        # immediately instead of the browser serving a stale cached page.
+        return FileResponse(index_file, headers={
+            "Cache-Control": "no-cache, must-revalidate",
+        })
     return JSONResponse({"message": "Chess Server Running. Static UI not found."})

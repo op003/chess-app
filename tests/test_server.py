@@ -30,9 +30,11 @@ class TestServerAPI(unittest.TestCase):
         res = get_personalities()
         self.assertIn("personalities", res)
         p_ids = [p["id"] for p in res["personalities"]]
-        self.assertIn("tal", p_ids)
+        # v1.8: website roster = championship top-3 only
+        self.assertIn("trained", p_ids)
         self.assertIn("morphy", p_ids)
         self.assertIn("kasparov", p_ids)
+        self.assertEqual(len(p_ids), 3)
 
     def test_bot_move(self):
         req = MoveRequest(

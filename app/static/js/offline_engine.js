@@ -5,6 +5,10 @@
  * instant SAN notation and local weight persistence.
  */
 
+// Championship roster (v1.8): bottom-3 styles retired from the website UI;
+// weights/book lookups for them remain available internally.
+window.RETIRED_BOTS = ['alien_gambit', 'tal', 'rosen_trap'];
+
 const FALLBACK_GAMBITS = [
     {
         id: "kings_gambit", name: "King's Gambit", color: "white", eco: "C30-C39",
@@ -673,12 +677,14 @@ class OfflineEngine {
     }
 
     getPersonalities() {
-        return FALLBACK_PERSONALITIES.map(p => {
-            if (p.id === 'trained' && this.trainedWeights) {
-                return { ...p, weights: { ...this.trainedWeights } };
-            }
-            return { ...p, weights: { ...p.weights } };
-        });
+        return FALLBACK_PERSONALITIES
+            .filter(p => !(window.RETIRED_BOTS || []).includes(p.id))
+            .map(p => {
+                if (p.id === 'trained' && this.trainedWeights) {
+                    return { ...p, weights: { ...this.trainedWeights } };
+                }
+                return { ...p, weights: { ...p.weights } };
+            });
     }
 
     getPersonalityWeights(personalityId, customWeights = null) {
@@ -943,7 +949,7 @@ class OfflineEngine {
         };
     }
 
-    chooseMove(fen, movesList = [], personalityId = 'tal', preferredGambitId = null, depth = 3, customWeights = null) {
+    chooseMove(fen, movesList = [], personalityId = 'trained', preferredGambitId = null, depth = 3, customWeights = null) {
         const state = FastChessState.fromFen(fen);
         const legal = state.legalMoves();
         if (legal.length === 0) return null;
@@ -1002,7 +1008,7 @@ class OfflineEngine {
         };
     }
 
-    evaluatePosition(fen, personalityId = 'tal', customWeights = null) {
+    evaluatePosition(fen, personalityId = 'trained', customWeights = null) {
         const state = FastChessState.fromFen(fen);
         const legal = state.legalMoves();
         const inCheck = state.isInCheck();
@@ -1025,7 +1031,7 @@ class OfflineEngine {
         };
     }
 
-    async trainEvolutionary({ generations = 3, depth = 1, personality = 'tal' }, onProgress, shouldStop) {
+    async trainEvolutionary({ generations = 3, depth = 1, personality = 'trained' }, onProgress, shouldStop) {
         const base = this.getPersonalityWeights(personality);
         let champion = { ...base };
         const positions = [

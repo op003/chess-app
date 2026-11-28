@@ -23,14 +23,16 @@ new Function(src + '\n;return window;')();
 const engine = globalThis.offlineEngine;
 check(typeof engine === 'object' && engine !== null, 'window.offlineEngine exists');
 
-// --- personalities (must include the new Alien Gambit) ---
+// --- personalities (roster = championship top-3; bottom-3 retired from the UI) ---
 const personalities = engine.getPersonalities();
 const ids = personalities.map(p => p.id);
-check(ids.includes('alien_gambit'), `roster includes alien_gambit (got: ${ids.join(', ')})`);
-check(ids.includes('trained'), 'roster includes trained');
-const alien = personalities.find(p => p.id === 'alien_gambit');
-check(alien.weights.gambit_aggression === 3.0, 'alien personality keeps its 300% aggression');
-check(alien.weights.king_safety_weight === 5.0, 'alien weights include the king_safety term');
+check(!ids.includes('alien_gambit') && !ids.includes('tal') && !ids.includes('rosen_trap'),
+    `retired bots hidden from roster (got: ${ids.join(', ')})`);
+check(ids.includes('trained') && ids.includes('kasparov') && ids.includes('morphy'),
+    'roster includes the championship top-3');
+const alien = { weights: engine.getPersonalityWeights('alien_gambit') };
+check(alien.weights.gambit_aggression === 3.0, 'alien personality keeps its 300% aggression (internal)');
+check(alien.weights.king_safety_weight === 5.0, 'alien weights include the king_safety term (internal)');
 
 // --- gambits ---
 const gambits = engine.getGambits();

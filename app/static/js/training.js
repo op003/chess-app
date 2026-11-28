@@ -64,7 +64,7 @@ class TrainingLab {
 
         const generations = parseInt(document.getElementById('train-generations').value, 10) || 3;
         const depth = parseInt(document.getElementById('train-depth').value, 10) || 2;
-        const basePersonality = document.getElementById('train-base-personality').value || 'tal';
+        const basePersonality = document.getElementById('train-base-personality').value || 'trained';
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/ws/train`;

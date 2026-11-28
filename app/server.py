@@ -117,11 +117,19 @@ def get_single_gambit(gambit_id: str):
     return gambit
 
 
+# Championship tournament (tournament_championship/, 1222 games, double round-robin):
+# ranked all six styles 1-6. Bottom-3 (rosen_trap, tal, alien_gambit) are retired from
+# the website roster; they stay in BOT_PERSONALITIES for training gates and arena runs.
+WEBSITE_ROSTER = ("trained", "kasparov", "morphy")
+
+
 @app.get("/api/personalities")
 def get_personalities():
     """Returns list of bot personalities with their descriptions and traits."""
     result = []
     for pid, p in BOT_PERSONALITIES.items():
+        if pid not in WEBSITE_ROSTER:
+            continue
         trained_weights = _load_personality_weights(pid)
         weights = trained_weights if trained_weights is not None else p["weights"]
         result.append({
